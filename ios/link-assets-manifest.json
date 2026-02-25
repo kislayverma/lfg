@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/sounds/crowd_cheer_1.mp3",
+      "sha1": "2f9600c747fbc8d6e1e0c0303add1ddbf2989270"
+    },
+    {
+      "path": "src/assets/sounds/crowd_cheer_2.mp3",
+      "sha1": "86184e862c078d25c963e8847af69408ac68dbe3"
+    },
+    {
+      "path": "src/assets/sounds/crowd_cheer_3.mp3",
+      "sha1": "689cd918a5781b8967724db0b655f4aa4821632a"
+    }
+  ]
+}
