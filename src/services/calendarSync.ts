@@ -139,11 +139,17 @@ function parseRRuleToRecurrence(rrule: string): {
 
   const frequency = freqMap[freq];
 
-  const rule: RecurrenceRule = {
+  // The library's RecurrenceRule type marks all fields required, but the
+  // native implementations (iOS/Android) treat endDate and occurrence as
+  // optional.  We build a partial object and cast to satisfy the type.
+  const rule: Partial<RecurrenceRule> & {frequency: RecurrenceFrequency} = {
     frequency,
     interval: parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : 1,
-    occurrence: parts.COUNT ? parseInt(parts.COUNT, 10) : undefined,
   };
+
+  if (parts.COUNT) {
+    rule.occurrence = parseInt(parts.COUNT, 10);
+  }
 
   if (parts.UNTIL) {
     // UNTIL is formatted like 20260331T235959Z
@@ -154,7 +160,7 @@ function parseRRuleToRecurrence(rrule: string): {
     rule.endDate = new Date(year, month, day).toISOString();
   }
 
-  return {recurrence: frequency, recurrenceRule: rule};
+  return {recurrence: frequency, recurrenceRule: rule as RecurrenceRule};
 }
 
 // ── Public API ────────────────────────────────────────────────────────

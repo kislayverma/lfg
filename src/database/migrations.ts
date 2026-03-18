@@ -8,6 +8,33 @@ import {
 export const migrations = schemaMigrations({
   migrations: [
     {
+      toVersion: 6,
+      steps: [
+        createTable({
+          name: 'journal_pages',
+          columns: [
+            {name: 'user_id', type: 'string', isIndexed: true},
+            {name: 'title', type: 'string'},
+            {name: 'title_normalized', type: 'string', isIndexed: true},
+            {name: 'content', type: 'string'},
+            {name: 'page_type', type: 'string'},
+            {name: 'is_pinned', type: 'boolean'},
+            {name: 'updated_at', type: 'number'},
+            {name: 'created_at', type: 'number'},
+          ],
+        }),
+        createTable({
+          name: 'journal_links',
+          columns: [
+            {name: 'user_id', type: 'string', isIndexed: true},
+            {name: 'source_page_id', type: 'string', isIndexed: true},
+            {name: 'target_title_normalized', type: 'string', isIndexed: true},
+            {name: 'created_at', type: 'number'},
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 5,
       steps: [
         addColumns({

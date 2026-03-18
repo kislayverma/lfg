@@ -14,6 +14,9 @@ import ReceiveShareScreen from '../features/sharing/ReceiveShareScreen';
 import StreakDetailScreen from '../features/streaks/StreakDetailScreen';
 import SignUpScreen from '../features/auth/SignUpScreen';
 import LoginScreen from '../features/auth/LoginScreen';
+import JournalScreen from '../features/journal/JournalScreen';
+import PageEditorScreen from '../features/journal/PageEditorScreen';
+import PageListScreen from '../features/journal/PageListScreen';
 
 import {useAuthStore} from '../stores/authStore';
 import {useTheme} from '../theme';
@@ -28,6 +31,7 @@ export type RootTabParamList = {
   HomeTab: undefined;
   StreaksTab: undefined;
   ActivitiesTab: undefined;
+  JournalTab: undefined;
   SettingsTab: undefined;
 };
 
@@ -48,16 +52,24 @@ export type ActivitiesStackParamList = {
   ActivityDetail: {activityId: string};
 };
 
+export type JournalStackParamList = {
+  Journal: undefined;
+  PageEditor: {title: string; pageType?: 'daily' | 'page'};
+  PageList: undefined;
+};
+
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const StreaksStack = createNativeStackNavigator<StreaksStackParamList>();
 const ActivitiesStack = createNativeStackNavigator<ActivitiesStackParamList>();
+const JournalStack = createNativeStackNavigator<JournalStackParamList>();
 
 const TAB_ICONS: Record<string, {active: string; inactive: string}> = {
   Home: {active: '\u{1F3E0}', inactive: '\u{1F3E0}'},
   Streaks: {active: '\u{1F525}', inactive: '\u{1F525}'},
   Activities: {active: '\u{2705}', inactive: '\u{2705}'},
+  Journal: {active: '\u{1F4D3}', inactive: '\u{1F4D3}'},
   Settings: {active: '\u{2699}\u{FE0F}', inactive: '\u{2699}\u{FE0F}'},
 };
 
@@ -195,6 +207,34 @@ function ActivitiesStackNavigator() {
   );
 }
 
+function JournalStackNavigator() {
+  const theme = useTheme();
+  return (
+    <JournalStack.Navigator
+      screenOptions={{
+        headerTintColor: theme.colors.primary,
+        headerStyle: {backgroundColor: theme.colors.bgLight},
+        headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
+      }}>
+      <JournalStack.Screen
+        name="Journal"
+        component={JournalScreen}
+        options={{headerShown: false}}
+      />
+      <JournalStack.Screen
+        name="PageEditor"
+        component={PageEditorScreen}
+        options={{headerTitle: 'Page'}}
+      />
+      <JournalStack.Screen
+        name="PageList"
+        component={PageListScreen}
+        options={{headerTitle: 'All Pages'}}
+      />
+    </JournalStack.Navigator>
+  );
+}
+
 function AuthNavigator() {
   return (
     <AuthStack.Navigator screenOptions={{headerShown: false}}>
@@ -253,6 +293,16 @@ function MainNavigator() {
           tabBarLabel: 'Activities',
           tabBarIcon: ({focused}) => (
             <TabIcon label="Activities" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="JournalTab"
+        component={JournalStackNavigator}
+        options={{
+          tabBarLabel: 'Journal',
+          tabBarIcon: ({focused}) => (
+            <TabIcon label="Journal" focused={focused} />
           ),
         }}
       />
