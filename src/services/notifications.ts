@@ -80,10 +80,16 @@ export async function scheduleReminders(schedule: Schedule): Promise<void> {
   // Ensure notification channels exist before scheduling
   await setupNotificationChannels();
 
-  // Look up the activity name for the notification body
-  const activity = await database
-    .get<Activity>('activities')
-    .find(schedule.activityId);
+  // Resolve the display name for the notification
+  let activityName: string;
+  if (schedule.activityId) {
+    const activity = await database
+      .get<Activity>('activities')
+      .find(schedule.activityId);
+    activityName = activity.name;
+  } else {
+    activityName = schedule.adHocName || 'Scheduled activity';
+  }
 
   const dtstart = new Date(schedule.dtstart);
   const now = new Date();
@@ -135,31 +141,38 @@ export async function scheduleReminders(schedule: Schedule): Promise<void> {
         Platform.OS === 'android' ? {type: 2} : undefined, // SET_EXACT
     };
 
+    const isAdHoc = !schedule.activityId;
+
     await notifee.createTriggerNotification(
       {
         id: notificationId,
-        title: `Time for ${activity.name}`,
+        title: `Time for ${activityName}`,
         body: formatReminderBody(schedule.reminderOffset),
         data: {
           scheduleId: schedule.id,
-          activityId: schedule.activityId,
+          ...(schedule.activityId
+            ? {activityId: schedule.activityId}
+            : {}),
           occurrenceTimestamp: occTime.getTime(),
         },
         android: {
           channelId: CHANNEL_REMINDERS,
           category: AndroidCategory.ALARM,
           pressAction: {id: 'default'},
-          actions: [
-            {
-              title: 'Mark Done',
-              pressAction: {id: 'mark-done'},
-            },
-          ],
+          // Only show "Mark Done" for habit schedules (not ad-hoc)
+          ...(!isAdHoc && {
+            actions: [
+              {
+                title: 'Mark Done',
+                pressAction: {id: 'mark-done'},
+              },
+            ],
+          }),
           smallIcon: 'ic_notification',
           importance: AndroidImportance.HIGH,
         },
         ios: {
-          categoryId: 'habit-reminder',
+          categoryId: isAdHoc ? undefined : 'habit-reminder',
           sound: 'default',
         },
       },
@@ -181,6 +194,21 @@ export async function cancelRemindersForSchedule(
 
   for (const id of toCancel) {
     await notifee.cancelTriggerNotification(id);
+  }
+}
+
+/**
+ * Cancels a single pending reminder notification for a specific occurrence.
+ */
+export async function cancelReminderForOccurrence(
+  scheduleId: string,
+  occurrenceTimestamp: number,
+): Promise<void> {
+  const id = triggerNotificationId(scheduleId, occurrenceTimestamp);
+  try {
+    await notifee.cancelTriggerNotification(id);
+  } catch {
+    // Notification may not exist (already fired or never scheduled) — ignore
   }
 }
 

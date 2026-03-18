@@ -1,7 +1,7 @@
 import {appSchema, tableSchema} from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 4,
+  version: 5,
   tables: [
     tableSchema({
       name: 'users',
@@ -42,7 +42,8 @@ export const schema = appSchema({
       name: 'schedules',
       columns: [
         {name: 'user_id', type: 'string', isIndexed: true},
-        {name: 'activity_id', type: 'string', isIndexed: true},
+        {name: 'activity_id', type: 'string', isOptional: true, isIndexed: true},
+        {name: 'ad_hoc_name', type: 'string', isOptional: true},
         {name: 'rrule', type: 'string'},
         {name: 'dtstart', type: 'number'},
         {name: 'duration_minutes', type: 'number'},

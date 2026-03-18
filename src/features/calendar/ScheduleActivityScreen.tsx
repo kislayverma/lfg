@@ -11,8 +11,9 @@ import {
   Keyboard,
   NativeModules,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {RouteProp} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {database, Activity} from '../../database';
@@ -31,6 +32,7 @@ import type {Theme} from '../../theme';
 import type {HomeStackParamList} from '../../navigation/AppNavigator';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'ScheduleActivity'>;
+type Route = RouteProp<HomeStackParamList, 'ScheduleActivity'>;
 
 type Frequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 type EndType = 'never' | 'count' | 'date';
@@ -56,6 +58,7 @@ export default function ScheduleActivityScreen() {
   const styles = useStyles(theme);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
+  const route = useRoute<Route>();
 
   // Match the system nav bar color to this modal's background on Android
   useEffect(() => {
@@ -80,9 +83,13 @@ export default function ScheduleActivityScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchResults = useActivitySearch(activityName);
 
-  const [startDate, setStartDate] = useState(new Date());
+  const initialDate = route.params?.date
+    ? new Date(route.params.date + 'T00:00:00')
+    : new Date();
+  const [startDate, setStartDate] = useState(initialDate);
   const [startTime, setStartTime] = useState('09:00');
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [repeats, setRepeats] = useState(false);
   const [frequency, setFrequency] = useState<Frequency>('WEEKLY');
   const [interval, setInterval] = useState('1');
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
@@ -133,15 +140,19 @@ export default function ScheduleActivityScreen() {
     [endDate],
   );
 
-  const rruleString = buildRRule({
-    freq: frequency,
-    interval: parseInt(interval, 10) || 1,
-    byDay: frequency === 'WEEKLY' && selectedDays.length > 0 ? selectedDays : undefined,
-    count: endType === 'count' ? parseInt(occurrenceCount, 10) || 10 : undefined,
-    until: endType === 'date' ? endDate : undefined,
-  });
+  const rruleString = repeats
+    ? buildRRule({
+        freq: frequency,
+        interval: parseInt(interval, 10) || 1,
+        byDay: frequency === 'WEEKLY' && selectedDays.length > 0 ? selectedDays : undefined,
+        count: endType === 'count' ? parseInt(occurrenceCount, 10) || 10 : undefined,
+        until: endType === 'date' ? endDate : undefined,
+      })
+    : buildRRule({freq: 'DAILY', count: 1});
 
-  const rruleDescription = describeRRule(rruleString, startDate);
+  const rruleDescription = repeats
+    ? describeRRule(rruleString, startDate)
+    : 'One-time event (does not repeat)';
 
   const handleSave = useCallback(async () => {
     const trimmed = activityName.trim();
@@ -155,35 +166,6 @@ export default function ScheduleActivityScreen() {
 
     setIsSaving(true);
     try {
-      const activitiesCollection = database.get<Activity>('activities');
-      const normalized = normalizeActivityName(trimmed);
-      const existing = await activitiesCollection
-        .query(
-          Q.where('user_id', userId),
-          Q.where('name_normalized', normalized),
-        )
-        .fetch();
-
-      let activityId: string;
-      if (existing.length > 0) {
-        activityId = existing[0].id;
-      } else {
-        let newActivity: Activity;
-        await database.write(async () => {
-          newActivity = await activitiesCollection.create(a => {
-            a.userId = userId;
-            a.name = trimmed;
-            a.nameNormalized = normalized;
-            a.color = randomActivityColor();
-            a.icon = null;
-            a.currentStreak = 0;
-            a.longestStreak = 0;
-            a.lastLoggedAt = null;
-          });
-        });
-        activityId = newActivity!.id;
-      }
-
       const [hours, mins] = startTime.split(':').map(Number);
       const dtstart = new Date(startDate);
       dtstart.setHours(hours || 9, mins || 0, 0, 0);
@@ -198,16 +180,61 @@ export default function ScheduleActivityScreen() {
         await requestCalendarPermission();
       }
 
-      await createSchedule({
-        activityId,
-        rrule: rruleString,
-        dtstart,
-        durationMinutes,
-        reminderOffset,
-        untilDate: endType === 'date' ? endDate : undefined,
-      });
+      if (repeats) {
+        // Recurring schedule → create or reuse an Activity record
+        const activitiesCollection = database.get<Activity>('activities');
+        const normalized = normalizeActivityName(trimmed);
+        const existing = await activitiesCollection
+          .query(
+            Q.where('user_id', userId),
+            Q.where('name_normalized', normalized),
+          )
+          .fetch();
 
-      showToast(`${trimmed} scheduled! Consistency starts now.`);
+        let activityId: string;
+        if (existing.length > 0) {
+          activityId = existing[0].id;
+        } else {
+          let newActivity: Activity;
+          await database.write(async () => {
+            newActivity = await activitiesCollection.create(a => {
+              a.userId = userId;
+              a.name = trimmed;
+              a.nameNormalized = normalized;
+              a.color = randomActivityColor();
+              a.icon = null;
+              a.currentStreak = 0;
+              a.longestStreak = 0;
+              a.lastLoggedAt = null;
+            });
+          });
+          activityId = newActivity!.id;
+        }
+
+        await createSchedule({
+          activityId,
+          rrule: rruleString,
+          dtstart,
+          durationMinutes,
+          reminderOffset,
+          untilDate: endType === 'date' ? endDate : undefined,
+        });
+      } else {
+        // One-time ad-hoc schedule → no Activity record
+        await createSchedule({
+          adHocName: trimmed,
+          rrule: rruleString,
+          dtstart,
+          durationMinutes,
+          reminderOffset,
+        });
+      }
+
+      showToast(
+        repeats
+          ? `${trimmed} scheduled! Consistency starts now.`
+          : `${trimmed} added to your calendar.`,
+      );
       navigation.goBack();
     } catch (error) {
       console.error('Error creating schedule:', error);
@@ -217,6 +244,7 @@ export default function ScheduleActivityScreen() {
   }, [
     activityName,
     userId,
+    repeats,
     startDate,
     startTime,
     durationMinutes,
@@ -341,142 +369,165 @@ export default function ScheduleActivityScreen() {
           ))}
         </View>
 
-        {/* Recurrence frequency */}
+        {/* Repeats toggle */}
         <Text style={styles.label}>Repeats</Text>
         <View style={styles.chipRow}>
-          {FREQ_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[
-                styles.chip,
-                frequency === opt.value && styles.chipSelected,
-              ]}
-              onPress={() => { Keyboard.dismiss(); setFrequency(opt.value); }}>
-              <Text
-                style={[
-                  styles.chipText,
-                  frequency === opt.value && styles.chipTextSelected,
-                ]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.chip, !repeats && styles.chipSelected]}
+            onPress={() => { Keyboard.dismiss(); setRepeats(false); }}>
+            <Text style={[styles.chipText, !repeats && styles.chipTextSelected]}>
+              No
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chip, repeats && styles.chipSelected]}
+            onPress={() => { Keyboard.dismiss(); setRepeats(true); }}>
+            <Text style={[styles.chipText, repeats && styles.chipTextSelected]}>
+              Yes
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Interval */}
-        <Text style={styles.label}>Every</Text>
-        <View style={styles.intervalRow}>
-          <TextInput
-            style={[styles.input, styles.intervalInput]}
-            value={interval}
-            onChangeText={setInterval}
-            keyboardType="number-pad"
-            maxLength={2}
-          />
-          <Text style={styles.intervalSuffix}>
-            {frequency === 'DAILY'
-              ? 'day(s)'
-              : frequency === 'WEEKLY'
-                ? 'week(s)'
-                : frequency === 'MONTHLY'
-                  ? 'month(s)'
-                  : 'year(s)'}
-          </Text>
-        </View>
-
-        {/* Day-of-week selector (for weekly) */}
-        {frequency === 'WEEKLY' && (
+        {repeats && (
           <>
-            <Text style={styles.label}>On these days</Text>
+            {/* Recurrence frequency */}
+            <Text style={styles.label}>Frequency</Text>
             <View style={styles.chipRow}>
-              {WEEKDAY_LABELS.map((label, idx) => (
+              {FREQ_OPTIONS.map(opt => (
                 <TouchableOpacity
-                  key={idx}
+                  key={opt.value}
                   style={[
-                    styles.dayChip,
-                    selectedDays.includes(idx) && styles.dayChipSelected,
+                    styles.chip,
+                    frequency === opt.value && styles.chipSelected,
                   ]}
-                  onPress={() => toggleDay(idx)}>
+                  onPress={() => { Keyboard.dismiss(); setFrequency(opt.value); }}>
                   <Text
                     style={[
-                      styles.dayChipText,
-                      selectedDays.includes(idx) && styles.dayChipTextSelected,
+                      styles.chipText,
+                      frequency === opt.value && styles.chipTextSelected,
                     ]}>
-                    {label}
+                    {opt.label}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-          </>
-        )}
 
-        {/* End condition */}
-        <Text style={styles.label}>Ends</Text>
-        <View style={styles.chipRow}>
-          <TouchableOpacity
-            style={[styles.chip, endType === 'never' && styles.chipSelected]}
-            onPress={() => { Keyboard.dismiss(); setEndType('never'); }}>
-            <Text
-              style={[
-                styles.chipText,
-                endType === 'never' && styles.chipTextSelected,
-              ]}>
-              Never
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.chip, endType === 'count' && styles.chipSelected]}
-            onPress={() => { Keyboard.dismiss(); setEndType('count'); }}>
-            <Text
-              style={[
-                styles.chipText,
-                endType === 'count' && styles.chipTextSelected,
-              ]}>
-              After
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.chip, endType === 'date' && styles.chipSelected]}
-            onPress={() => { Keyboard.dismiss(); setEndType('date'); }}>
-            <Text
-              style={[
-                styles.chipText,
-                endType === 'date' && styles.chipTextSelected,
-              ]}>
-              On Date
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {endType === 'count' && (
-          <View style={styles.intervalRow}>
-            <TextInput
-              style={[styles.input, styles.intervalInput]}
-              value={occurrenceCount}
-              onChangeText={setOccurrenceCount}
-              keyboardType="number-pad"
-              maxLength={3}
-            />
-            <Text style={styles.intervalSuffix}>occurrences</Text>
-          </View>
-        )}
-
-        {endType === 'date' && (
-          <View style={styles.dateRow}>
-            <TouchableOpacity
-              style={styles.dateArrow}
-              onPress={() => adjustEndDate(-7)}>
-              <Text style={styles.dateArrowText}>{'\u{2039}'}</Text>
-            </TouchableOpacity>
-            <View style={styles.dateDisplay}>
-              <Text style={styles.dateText}>{endDateLabel}</Text>
+            {/* Interval */}
+            <Text style={styles.label}>Every</Text>
+            <View style={styles.intervalRow}>
+              <TextInput
+                style={[styles.input, styles.intervalInput]}
+                value={interval}
+                onChangeText={setInterval}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <Text style={styles.intervalSuffix}>
+                {frequency === 'DAILY'
+                  ? 'day(s)'
+                  : frequency === 'WEEKLY'
+                    ? 'week(s)'
+                    : frequency === 'MONTHLY'
+                      ? 'month(s)'
+                      : 'year(s)'}
+              </Text>
             </View>
-            <TouchableOpacity
-              style={styles.dateArrow}
-              onPress={() => adjustEndDate(7)}>
-              <Text style={styles.dateArrowText}>{'\u{203A}'}</Text>
-            </TouchableOpacity>
-          </View>
+
+            {/* Day-of-week selector (for weekly) */}
+            {frequency === 'WEEKLY' && (
+              <>
+                <Text style={styles.label}>On these days</Text>
+                <View style={styles.chipRow}>
+                  {WEEKDAY_LABELS.map((label, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[
+                        styles.dayChip,
+                        selectedDays.includes(idx) && styles.dayChipSelected,
+                      ]}
+                      onPress={() => toggleDay(idx)}>
+                      <Text
+                        style={[
+                          styles.dayChipText,
+                          selectedDays.includes(idx) && styles.dayChipTextSelected,
+                        ]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* End condition */}
+            <Text style={styles.label}>Ends</Text>
+            <View style={styles.chipRow}>
+              <TouchableOpacity
+                style={[styles.chip, endType === 'never' && styles.chipSelected]}
+                onPress={() => { Keyboard.dismiss(); setEndType('never'); }}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    endType === 'never' && styles.chipTextSelected,
+                  ]}>
+                  Never
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.chip, endType === 'count' && styles.chipSelected]}
+                onPress={() => { Keyboard.dismiss(); setEndType('count'); }}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    endType === 'count' && styles.chipTextSelected,
+                  ]}>
+                  After
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.chip, endType === 'date' && styles.chipSelected]}
+                onPress={() => { Keyboard.dismiss(); setEndType('date'); }}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    endType === 'date' && styles.chipTextSelected,
+                  ]}>
+                  On Date
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {endType === 'count' && (
+              <View style={styles.intervalRow}>
+                <TextInput
+                  style={[styles.input, styles.intervalInput]}
+                  value={occurrenceCount}
+                  onChangeText={setOccurrenceCount}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                />
+                <Text style={styles.intervalSuffix}>occurrences</Text>
+              </View>
+            )}
+
+            {endType === 'date' && (
+              <View style={styles.dateRow}>
+                <TouchableOpacity
+                  style={styles.dateArrow}
+                  onPress={() => adjustEndDate(-7)}>
+                  <Text style={styles.dateArrowText}>{'\u{2039}'}</Text>
+                </TouchableOpacity>
+                <View style={styles.dateDisplay}>
+                  <Text style={styles.dateText}>{endDateLabel}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.dateArrow}
+                  onPress={() => adjustEndDate(7)}>
+                  <Text style={styles.dateArrowText}>{'\u{203A}'}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
 
         {/* Reminder */}

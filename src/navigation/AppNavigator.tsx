@@ -34,7 +34,7 @@ export type RootTabParamList = {
 export type HomeStackParamList = {
   Calendar: undefined;
   LogActivity: {date?: string} | undefined;
-  ScheduleActivity: {activityId?: string} | undefined;
+  ScheduleActivity: {activityId?: string; date?: string} | undefined;
   ReceiveShare: {name: string; rrule: string; time: string; duration: number};
 };
 

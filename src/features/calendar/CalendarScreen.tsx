@@ -411,6 +411,12 @@ const useStyles = (theme: Theme) =>
           fontWeight: '600',
           color: theme.colors.text,
         },
+        sheetActionDisabled: {
+          opacity: 0.35,
+        },
+        sheetActionLabelDisabled: {
+          color: theme.colors.textMuted,
+        },
       }),
     [theme],
   );
@@ -622,10 +628,15 @@ export default function CalendarScreen() {
             navigation.navigate('LogActivity', {date: formatDateKey(selectedDate)});
           }}
           onScheduleActivity={() => {
+            const dateStr = formatDateKey(selectedDate);
             setSelectedDate(null);
-            navigation.navigate('ScheduleActivity');
+            navigation.navigate('ScheduleActivity', {date: dateStr});
           }}
           onMarkDone={async (scheduleId, activityId, comment) => {
+            if (!activityId) {
+              // Ad-hoc schedule — nothing to log
+              return;
+            }
             const act = activitiesMap[activityId];
             if (!act) {
               return;
@@ -673,7 +684,7 @@ function DayDetailSheet({
   onClose: () => void;
   onLogActivity: () => void;
   onScheduleActivity: () => void;
-  onMarkDone: (scheduleId: string, activityId: string, comment: string) => void;
+  onMarkDone: (scheduleId: string, activityId: string | null, comment: string) => void;
   onSkipInstance: (scheduleId: string) => Promise<void>;
   onSkipAllFuture: (scheduleId: string) => Promise<void>;
 }) {
@@ -685,6 +696,10 @@ function DayDetailSheet({
   const [skippingId, setSkippingId] = useState<string | null>(null);
   const [confirmStopAll, setConfirmStopAll] = useState(false);
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPastDate = date < today;
   const dateLabel = date.toLocaleDateString('default', {
     weekday: 'long',
     month: 'long',
@@ -718,7 +733,9 @@ function DayDetailSheet({
                 {scheduledItems
                   .filter(({schedule}) => !doneScheduleIds.has(schedule.id))
                   .map(({schedule, activityId}) => {
-                  const act = activitiesMap[activityId];
+                  const act = activityId ? activitiesMap[activityId] : null;
+                  const displayName = act?.name || schedule.adHocName || 'Unknown';
+                  const isAdHoc = !activityId;
                   const dtstart = new Date(schedule.dtstart);
                   const startTime = `${String(dtstart.getHours()).padStart(2, '0')}:${String(dtstart.getMinutes()).padStart(2, '0')}`;
                   const endDate = new Date(dtstart.getTime() + schedule.durationMinutes * 60 * 1000);
@@ -733,7 +750,7 @@ function DayDetailSheet({
                       ]}>
                       <View style={styles.scheduleInfo}>
                         <Text style={styles.scheduleText}>
-                          {act?.name || 'Unknown'}
+                          {displayName}
                         </Text>
                         <Text style={styles.scheduleMeta}>
                           {`${startTime} \u{2013} ${endTime} (${schedule.durationMinutes} min)`}
@@ -847,16 +864,30 @@ function DayDetailSheet({
                             }}>
                             <Text style={styles.skipBtnText}>Skip</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.markDoneBtn}
-                            onPress={() => {
-                              setCommentingId(schedule.id);
-                              setCommentText('');
-                            }}>
-                            <Text style={styles.markDoneBtnText}>
-                              Mark Done
-                            </Text>
-                          </TouchableOpacity>
+                          {isAdHoc ? (
+                            <TouchableOpacity
+                              style={styles.markDoneBtn}
+                              onPress={() => {
+                                // Ad-hoc: just dismiss — nothing to log
+                                onSkipInstance(schedule.id);
+                                setSkippedIds(prev => new Set(prev).add(schedule.id));
+                              }}>
+                              <Text style={styles.markDoneBtnText}>
+                                Done
+                              </Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity
+                              style={styles.markDoneBtn}
+                              onPress={() => {
+                                setCommentingId(schedule.id);
+                                setCommentText('');
+                              }}>
+                              <Text style={styles.markDoneBtnText}>
+                                Mark Done
+                              </Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
                       )}
                     </View>
@@ -919,11 +950,14 @@ function DayDetailSheet({
               <Text style={styles.sheetActionLabel}>Log Activity</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.sheetActionBtnAlt}
+              style={[styles.sheetActionBtnAlt, isPastDate && styles.sheetActionDisabled]}
               onPress={onScheduleActivity}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              disabled={isPastDate}>
               <Text style={styles.sheetActionIcon}>{'\u{1F4C5}'}</Text>
-              <Text style={styles.sheetActionLabelAlt}>Schedule</Text>
+              <Text style={[styles.sheetActionLabelAlt, isPastDate && styles.sheetActionLabelDisabled]}>
+                Schedule
+              </Text>
             </TouchableOpacity>
           </View>
         </Pressable>

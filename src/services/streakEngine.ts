@@ -179,6 +179,10 @@ export async function recalculateAllStreaks(): Promise<void> {
 
   const schedulesByActivity = new Map<string, Schedule[]>();
   for (const schedule of allSchedules) {
+    // Skip ad-hoc schedules (no activity to track streaks for)
+    if (!schedule.activityId) {
+      continue;
+    }
     const list = schedulesByActivity.get(schedule.activityId);
     if (list) {
       list.push(schedule);

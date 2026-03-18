@@ -10,7 +10,8 @@ export default class Schedule extends Model {
   };
 
   @field('user_id') userId!: string;
-  @field('activity_id') activityId!: string;
+  @field('activity_id') activityId!: string | null;
+  @field('ad_hoc_name') adHocName!: string | null;
   @field('rrule') rrule!: string;
   @field('dtstart') dtstart!: number;
   @field('duration_minutes') durationMinutes!: number;

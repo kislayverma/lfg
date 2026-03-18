@@ -8,6 +8,7 @@ import {usePreferencesStore} from '../stores/preferencesStore';
 import {
   scheduleReminders,
   cancelRemindersForSchedule,
+  cancelReminderForOccurrence,
   createSystemAlarm,
 } from '../services/notifications';
 import {
@@ -21,7 +22,7 @@ import {
  */
 export function useSchedulesForDate(dateOrKey: Date | string) {
   const [scheduledItems, setScheduledItems] = useState<
-    Array<{schedule: Schedule; activityId: string}>
+    Array<{schedule: Schedule; activityId: string | null}>
   >([]);
   const currentUser = useAuthStore(s => s.currentUser);
   const userId = currentUser?.id;
@@ -65,7 +66,7 @@ export function useSchedulesForDate(dateOrKey: Date | string) {
         // First pass: find schedules that have an occurrence on this date
         const candidates: Array<{
           schedule: Schedule;
-          activityId: string;
+          activityId: string | null;
         }> = [];
 
         for (const schedule of allSchedules) {
@@ -121,6 +122,7 @@ export function useSchedulesForDate(dateOrKey: Date | string) {
 
 /**
  * Skip a single occurrence of a schedule on a given date.
+ * Also cancels the pending notification for that specific occurrence.
  */
 export async function skipScheduleInstance(
   scheduleId: string,
@@ -138,11 +140,28 @@ export async function skipScheduleInstance(
       e.newDuration = null;
     });
   });
+
+  // Cancel the notification for this specific occurrence
+  try {
+    const schedule = await database.get<Schedule>('schedules').find(scheduleId);
+    const dtstart = new Date(schedule.dtstart);
+    // Build the occurrence timestamp: date from the skipped day, time from dtstart
+    const occTime = new Date(date);
+    occTime.setHours(dtstart.getHours(), dtstart.getMinutes(), 0, 0);
+    await cancelReminderForOccurrence(scheduleId, occTime.getTime());
+  } catch (error) {
+    console.error('Error cancelling notification for skipped occurrence:', error);
+  }
 }
 
 /**
- * Skip this and all future occurrences by setting the schedule's untilDate
- * to the day before the given date.
+ * Skip this and all future occurrences.
+ *
+ * If fromDate is the start date (or earlier), the schedule is fully
+ * deactivated. Otherwise the untilDate is set to the day before fromDate.
+ *
+ * In both cases we cancel all pending reminder notifications and remove
+ * the native calendar event so the user sees a clean slate.
  */
 export async function skipAllFutureInstances(
   scheduleId: string,
@@ -150,31 +169,65 @@ export async function skipAllFutureInstances(
 ): Promise<void> {
   const schedule = await database.get<Schedule>('schedules').find(scheduleId);
 
-  // Set until_date to the day before fromDate
-  const dayBefore = new Date(fromDate);
-  dayBefore.setDate(dayBefore.getDate() - 1);
-  const untilTs = toMidnightTimestamp(dayBefore);
+  const fromMidnight = toMidnightTimestamp(fromDate);
+  const dtstartMidnight = toMidnightTimestamp(new Date(schedule.dtstart));
 
-  await database.write(async () => {
-    await schedule.update(s => {
-      s.untilDate = untilTs;
+  // If skipping from the very start (or before), deactivate entirely
+  const shouldDeactivate = fromMidnight <= dtstartMidnight;
+
+  if (shouldDeactivate) {
+    await database.write(async () => {
+      await schedule.update(s => {
+        s.isActive = false;
+      });
     });
-  });
+  } else {
+    // Set until_date to the day before fromDate
+    const dayBefore = new Date(fromDate);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    const untilTs = toMidnightTimestamp(dayBefore);
 
-  // Reschedule reminders since the schedule now ends earlier
+    await database.write(async () => {
+      await schedule.update(s => {
+        s.untilDate = untilTs;
+      });
+    });
+  }
+
+  // Cancel all pending reminder notifications — do NOT reschedule
   try {
     await cancelRemindersForSchedule(scheduleId);
-    await scheduleReminders(schedule);
   } catch (error) {
-    console.error('Error rescheduling reminders after skip-all:', error);
+    console.error('Error cancelling reminders after skip-all:', error);
+  }
+
+  // Remove from native calendar
+  try {
+    await removeScheduleFromCalendar(schedule.nativeCalendarEventId);
+    // Clear the stored native event ID
+    if (schedule.nativeCalendarEventId) {
+      await database.write(async () => {
+        await schedule.update(s => {
+          s.nativeCalendarEventId = null;
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Error removing calendar event after skip-all:', error);
   }
 }
 
 /**
- * Creates a new schedule for an activity, scoped to the current user.
+ * Creates a new schedule, scoped to the current user.
+ *
+ * For recurring (habit) schedules, pass `activityId`.
+ * For one-time ad-hoc schedules, pass `adHocName` instead — no Activity
+ * record is created and the schedule won't appear in the Activities or
+ * Streaks tabs.
  */
 export async function createSchedule(params: {
-  activityId: string;
+  activityId?: string | null;
+  adHocName?: string | null;
   rrule: string;
   dtstart: Date;
   durationMinutes: number;
@@ -186,13 +239,16 @@ export async function createSchedule(params: {
     throw new Error('No authenticated user');
   }
 
+  const displayName = params.adHocName || 'Scheduled activity';
+
   const collection = database.get<Schedule>('schedules');
 
   let schedule: Schedule;
   await database.write(async () => {
     schedule = await collection.create(s => {
       s.userId = userId;
-      s.activityId = params.activityId;
+      s.activityId = params.activityId || null;
+      s.adHocName = params.adHocName || null;
       s.rrule = params.rrule;
       s.dtstart = params.dtstart.getTime();
       s.durationMinutes = params.durationMinutes;
@@ -202,6 +258,19 @@ export async function createSchedule(params: {
       s.nativeCalendarEventId = null;
     });
   });
+
+  // Resolve the name to use for calendar/alarm entries
+  let eventName = displayName;
+  if (params.activityId) {
+    try {
+      const activity = await database
+        .get<Activity>('activities')
+        .find(params.activityId);
+      eventName = activity.name;
+    } catch {
+      // Activity lookup failed — fall back to displayName
+    }
+  }
 
   const prefs = usePreferencesStore.getState();
 
@@ -216,10 +285,7 @@ export async function createSchedule(params: {
 
   // Create a system alarm on Android (visible in the clock app)
   try {
-    const activity = await database
-      .get<Activity>('activities')
-      .find(params.activityId);
-    await createSystemAlarm(schedule!, activity.name);
+    await createSystemAlarm(schedule!, eventName);
   } catch (error) {
     console.error('Error creating system alarm:', error);
   }
@@ -227,12 +293,9 @@ export async function createSchedule(params: {
   // Sync to native calendar if enabled
   if (prefs.calendarSyncEnabled) {
     try {
-      const activity = await database
-        .get<Activity>('activities')
-        .find(params.activityId);
       const nativeEventId = await syncScheduleToCalendar(
         schedule!,
-        activity.name,
+        eventName,
       );
       if (nativeEventId) {
         await database.write(async () => {

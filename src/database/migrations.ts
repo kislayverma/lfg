@@ -8,6 +8,17 @@ import {
 export const migrations = schemaMigrations({
   migrations: [
     {
+      toVersion: 5,
+      steps: [
+        addColumns({
+          table: 'schedules',
+          columns: [
+            {name: 'ad_hoc_name', type: 'string', isOptional: true},
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 4,
       steps: [
         unsafeExecuteSql(
