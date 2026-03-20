@@ -141,7 +141,9 @@ const useStyles = (theme: Theme) =>
         // Bottom sheet
         sheetOverlay: {
           flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: theme.statusBarLight
+            ? 'rgba(0,0,0,0.6)'
+            : 'rgba(0,0,0,0.4)',
           justifyContent: 'flex-end',
         },
         sheet: {
@@ -242,10 +244,10 @@ const useStyles = (theme: Theme) =>
           paddingHorizontal: 12,
           paddingVertical: 7,
           borderRadius: radius.sm,
-          backgroundColor: '#E53935',
+          backgroundColor: theme.colors.danger,
         },
         stopAllBtnText: {
-          color: '#FFFFFF',
+          color: theme.colors.textOnPrimary,
           fontSize: 13,
           fontWeight: '600',
         },
@@ -315,13 +317,13 @@ const useStyles = (theme: Theme) =>
           fontSize: 13,
         },
         skippedBadge: {
-          backgroundColor: 'rgba(229, 57, 53, 0.12)',
+          backgroundColor: theme.colors.dangerPale,
           paddingHorizontal: 10,
           paddingVertical: 5,
           borderRadius: radius.sm,
         },
         skippedLabel: {
-          color: '#E53935',
+          color: theme.colors.danger,
           fontWeight: '600',
           fontSize: 13,
         },

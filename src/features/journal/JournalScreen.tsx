@@ -148,7 +148,7 @@ export default function JournalScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Text style={styles.screenTitle}>Journal</Text>
+        <Text style={styles.screenTitle}>Notes</Text>
       </View>
 
       {/* Search bar */}

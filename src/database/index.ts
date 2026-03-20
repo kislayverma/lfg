@@ -1,3 +1,14 @@
+/**
+ * Database initialization.
+ *
+ * Model classes are imported directly here to avoid circular dependency
+ * issues with the plugin registry. The plugin manifests also declare
+ * their model classes for future use (marketplace enable/disable), but
+ * for database init we use direct imports to guarantee correct load order.
+ *
+ * Schema and migrations are defined in their respective files.
+ */
+
 import {Database} from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import {schema} from './schema';

@@ -1,8 +1,14 @@
+/**
+ * Background task configuration and headless task handler.
+ *
+ * Uses the plugin registry to run background tasks for all enabled
+ * plugins, rather than hardcoding calls to specific services.
+ */
+
 import BackgroundFetch, {
   BackgroundFetchStatus,
 } from 'react-native-background-fetch';
-import {recalculateAllStreaks} from './streakEngine';
-import {replenishAllReminders} from './notifications';
+import {registry} from '../plugins/registry';
 
 const TASK_ID = 'com.lfg.nightly-streak-recalc';
 
@@ -15,14 +21,14 @@ const TASK_ID = 'com.lfg.nightly-streak-recalc';
  * JobScheduler / AlarmManager.
  *
  * We request a 15-minute minimum interval, but the OS may throttle this.
- * The actual work (streak recalculation) is lightweight and fast.
+ * The actual work (streak recalculation, reminder replenishment) is
+ * lightweight and fast.
  */
 export async function configureBackgroundFetch(): Promise<void> {
   const onEvent = async (taskId: string) => {
     console.log('[BackgroundFetch] event received:', taskId);
     try {
-      await recalculateAllStreaks();
-      await replenishAllReminders();
+      await registry.runBackgroundTasks();
     } catch (error) {
       console.error('[BackgroundFetch] task error:', error);
     }
@@ -37,7 +43,7 @@ export async function configureBackgroundFetch(): Promise<void> {
 
   const status: BackgroundFetchStatus = await BackgroundFetch.configure(
     {
-      minimumFetchInterval: 15, // minutes — OS may increase this
+      minimumFetchInterval: 15, // minutes -- OS may increase this
       stopOnTerminate: false,
       startOnBoot: true,
       enableHeadless: true,
@@ -82,8 +88,7 @@ export async function headlessTask(event: {taskId: string; timeout: boolean}) {
 
   console.log('[BackgroundFetch Headless] event:', taskId);
   try {
-    await recalculateAllStreaks();
-    await replenishAllReminders();
+    await registry.runBackgroundTasks();
   } catch (error) {
     console.error('[BackgroundFetch Headless] error:', error);
   }

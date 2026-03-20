@@ -9,6 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {database, Activity, ActivityLog, Schedule} from '../../database';
 import {Q} from '@nozbe/watermelondb';
@@ -27,7 +29,10 @@ import {useThemeStore} from '../../stores/themeStore';
 
 const REMINDER_OPTIONS = [5, 10, 15, 30, 60];
 
+type Nav = NativeStackNavigationProp<any>;
+
 export default function SettingsScreen() {
+  const navigation = useNavigation<Nav>();
   const showToast = useUIStore(s => s.showToast);
   const {currentUser, logout} = useAuthStore();
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -238,6 +243,26 @@ export default function SettingsScreen() {
               <Text style={styles.profilePhone}>{currentUser?.phone}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Activities */}
+        <Text style={styles.sectionTitle}>Activities</Text>
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('ActivitiesList')}
+            activeOpacity={0.7}>
+            <View style={styles.rowIconContainer}>
+              <Text style={styles.rowIcon}>{'\u{2705}'}</Text>
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.rowTitle}>Manage Activities</Text>
+              <Text style={styles.rowSubtitle}>
+                View, create, and edit your activities
+              </Text>
+            </View>
+            <Text style={styles.rowAction}>{'\u{203A}'}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Theme section */}
@@ -468,28 +493,9 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* About section */}
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.section}>
-          <View style={styles.row}>
-            <View style={styles.rowIconContainer}>
-              <Text style={styles.rowIcon}>{'\u{1F525}'}</Text>
-            </View>
-            <View style={styles.rowContent}>
-              <Text style={styles.rowTitle}>{`LFG \u{1F680}`}</Text>
-              <Text style={styles.rowSubtitle}>
-                Build habits that actually stick
-              </Text>
-            </View>
-            <View style={styles.versionBadge}>
-              <Text style={styles.versionText}>v1.0.0</Text>
-            </View>
-          </View>
-        </View>
-
         <Text style={styles.footer}>
-          Built with care. All data is stored locally on your device.
-          {'\n'}Your streaks, your journey.
+          All data is stored locally on your device.
+          {'\n'}{`LFG \u{1F680} v1.0.0`}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -615,17 +621,6 @@ const useStyles = (theme: Theme) =>
         },
         dangerText: {
           color: theme.colors.danger,
-        },
-        versionBadge: {
-          backgroundColor: theme.colors.cardAlt,
-          paddingHorizontal: spacing.sm,
-          paddingVertical: spacing.xs,
-          borderRadius: radius.sm,
-        },
-        versionText: {
-          fontSize: 12,
-          color: theme.colors.textMuted,
-          fontWeight: '500',
         },
         // Chip selector (reminder minutes)
         chipRow: {

@@ -10,9 +10,11 @@ import {NativeModules, Platform} from 'react-native';
 import {database, Activity, ActivityLog, Schedule} from '../database';
 import {Q} from '@nozbe/watermelondb';
 import {expandRRule} from './rruleHelper';
-import {updateActivityStreak} from './streakEngine';
 import {useAuthStore} from '../stores/authStore';
 import {usePreferencesStore} from '../stores/preferencesStore';
+import {eventBus} from '../plugins/eventBus';
+import {ACTIVITY_LOGGED} from '../plugins/events';
+import type {ActivityLoggedPayload} from '../plugins/events';
 import {toMidnightTimestamp} from '../utils/date';
 
 const {AlarmModule} = NativeModules;
@@ -310,23 +312,12 @@ export async function handleNotificationEvent(event: Event): Promise<void> {
         });
       });
 
-      const streak = await updateActivityStreak(activityId);
-
-      // Fire a celebration notification if streak >= 2 and preference is on
-      const celebrationsOn =
-        usePreferencesStore.getState().celebrationNotificationsEnabled;
-      if (streak >= 2 && celebrationsOn) {
-        await notifee.displayNotification({
-          title: `${activity.name} streak!`,
-          body: `${streak} day streak. Keep going!`,
-          android: {
-            channelId: CHANNEL_CELEBRATIONS,
-            pressAction: {id: 'default'},
-            smallIcon: 'ic_notification',
-            importance: AndroidImportance.DEFAULT,
-          },
-        });
-      }
+      // Emit event so streaks plugin can update the streak
+      eventBus.emit<ActivityLoggedPayload>(ACTIVITY_LOGGED, {
+        activityId,
+        logDate,
+        source: 'notification',
+      });
     } catch (error) {
       console.error('Error handling Mark Done action:', error);
     }
