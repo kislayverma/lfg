@@ -1,38 +1,33 @@
+/**
+ * App Navigator.
+ *
+ * Builds the bottom tab bar dynamically from the plugin registry.
+ * Each enabled plugin with a tabRegistration contributes a tab.
+ * Tabs are ordered by the plugin's tabRegistration.order field.
+ *
+ * Auth screens are handled separately (not part of the plugin tab system).
+ */
+
 import React, {useEffect, useMemo} from 'react';
 import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import CalendarScreen from '../features/calendar/CalendarScreen';
-import StreaksScreen from '../features/streaks/StreaksScreen';
-import ActivitiesScreen from '../features/activities/ActivitiesScreen';
-import SettingsScreen from '../features/activities/SettingsScreen';
-import LogActivityScreen from '../features/activities/LogActivityScreen';
-import ScheduleActivityScreen from '../features/calendar/ScheduleActivityScreen';
-import ActivityDetailScreen from '../features/activities/ActivityDetailScreen';
-import ReceiveShareScreen from '../features/sharing/ReceiveShareScreen';
-import StreakDetailScreen from '../features/streaks/StreakDetailScreen';
+import {registry} from '../plugins';
+import type {PluginManifest, StackScreen} from '../plugins/types';
+
 import SignUpScreen from '../features/auth/SignUpScreen';
 import LoginScreen from '../features/auth/LoginScreen';
-import JournalScreen from '../features/journal/JournalScreen';
-import PageEditorScreen from '../features/journal/PageEditorScreen';
-import PageListScreen from '../features/journal/PageListScreen';
 
 import {useAuthStore} from '../stores/authStore';
 import {useTheme} from '../theme';
 import type {Theme} from '../theme/types';
 
+// ── Type Exports (kept for backward-compat with screens) ────────────
+
 export type AuthStackParamList = {
   SignUp: undefined;
   Login: undefined;
-};
-
-export type RootTabParamList = {
-  HomeTab: undefined;
-  StreaksTab: undefined;
-  ActivitiesTab: undefined;
-  JournalTab: undefined;
-  SettingsTab: undefined;
 };
 
 export type HomeStackParamList = {
@@ -58,20 +53,16 @@ export type JournalStackParamList = {
   PageList: undefined;
 };
 
+// ── Dynamic Tab Types ───────────────────────────────────────────────
+
+// RootTabParamList is built dynamically based on enabled plugins.
+// We use a generic Record for the tab navigator type.
+export type RootTabParamList = Record<string, undefined>;
+
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
-const HomeStack = createNativeStackNavigator<HomeStackParamList>();
-const StreaksStack = createNativeStackNavigator<StreaksStackParamList>();
-const ActivitiesStack = createNativeStackNavigator<ActivitiesStackParamList>();
-const JournalStack = createNativeStackNavigator<JournalStackParamList>();
 
-const TAB_ICONS: Record<string, {active: string; inactive: string}> = {
-  Home: {active: '\u{1F3E0}', inactive: '\u{1F3E0}'},
-  Streaks: {active: '\u{1F525}', inactive: '\u{1F525}'},
-  Activities: {active: '\u{2705}', inactive: '\u{2705}'},
-  Journal: {active: '\u{1F4D3}', inactive: '\u{1F4D3}'},
-  Settings: {active: '\u{2699}\u{FE0F}', inactive: '\u{2699}\u{FE0F}'},
-};
+// ── Tab Icon ────────────────────────────────────────────────────────
 
 function useTabStyles(theme: Theme) {
   return useMemo(
@@ -102,138 +93,57 @@ function useTabStyles(theme: Theme) {
   );
 }
 
-function TabIcon({label, focused}: {label: string; focused: boolean}) {
+function TabIcon({
+  icon,
+  focused,
+}: {
+  icon: {active: string; inactive: string};
+  focused: boolean;
+}) {
   const theme = useTheme();
   const tabStyles = useTabStyles(theme);
-  const icons = TAB_ICONS[label];
   return (
     <View style={tabStyles.iconContainer}>
       <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>
-        {focused ? icons?.active : icons?.inactive}
+        {focused ? icon.active : icon.inactive}
       </Text>
       {focused && <View style={tabStyles.activeDot} />}
     </View>
   );
 }
 
-function HomeStackNavigator() {
-  const theme = useTheme();
-  return (
-    <HomeStack.Navigator screenOptions={{headerShown: false}}>
-      <HomeStack.Screen name="Calendar" component={CalendarScreen} />
-      <HomeStack.Screen
-        name="LogActivity"
-        component={LogActivityScreen}
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerTitle: 'Log Activity',
+// ── Dynamic Stack Navigator Builder ─────────────────────────────────
+
+/**
+ * Creates a stack navigator component for a plugin's tab.
+ * Each plugin declares its screens in tabRegistration.stack.
+ */
+function createPluginStackNavigator(plugin: PluginManifest) {
+  const Stack = createNativeStackNavigator();
+
+  return function PluginStack() {
+    const theme = useTheme();
+    return (
+      <Stack.Navigator
+        screenOptions={{
           headerTintColor: theme.colors.primary,
           headerStyle: {backgroundColor: theme.colors.bgLight},
           headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-        }}
-      />
-      <HomeStack.Screen
-        name="ScheduleActivity"
-        component={ScheduleActivityScreen}
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerTitle: 'Schedule Activity',
-          headerTintColor: theme.colors.primary,
-          headerStyle: {backgroundColor: theme.colors.bgLight},
-          headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-        }}
-      />
-      <HomeStack.Screen
-        name="ReceiveShare"
-        component={ReceiveShareScreen}
-        options={{
-          presentation: 'modal',
-          headerShown: true,
-          headerTitle: 'Shared Activity',
-          headerTintColor: theme.colors.primary,
-          headerStyle: {backgroundColor: theme.colors.bgLight},
-          headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-        }}
-      />
-    </HomeStack.Navigator>
-  );
+        }}>
+        {plugin.tabRegistration!.stack.map((screen: StackScreen) => (
+          <Stack.Screen
+            key={screen.name}
+            name={screen.name}
+            component={screen.component}
+            options={screen.options}
+          />
+        ))}
+      </Stack.Navigator>
+    );
+  };
 }
 
-function StreaksStackNavigator() {
-  const theme = useTheme();
-  return (
-    <StreaksStack.Navigator
-      screenOptions={{
-        headerTintColor: theme.colors.primary,
-        headerStyle: {backgroundColor: theme.colors.bgLight},
-        headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-      }}>
-      <StreaksStack.Screen
-        name="StreaksList"
-        component={StreaksScreen}
-        options={{headerShown: false}}
-      />
-      <StreaksStack.Screen
-        name="StreakDetail"
-        component={StreakDetailScreen}
-        options={{headerTitle: 'Streak Detail'}}
-      />
-    </StreaksStack.Navigator>
-  );
-}
-
-function ActivitiesStackNavigator() {
-  const theme = useTheme();
-  return (
-    <ActivitiesStack.Navigator
-      screenOptions={{
-        headerTintColor: theme.colors.primary,
-        headerStyle: {backgroundColor: theme.colors.bgLight},
-        headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-      }}>
-      <ActivitiesStack.Screen
-        name="ActivitiesList"
-        component={ActivitiesScreen}
-        options={{headerTitle: 'My Activities'}}
-      />
-      <ActivitiesStack.Screen
-        name="ActivityDetail"
-        component={ActivityDetailScreen}
-        options={{headerTitle: 'Activity'}}
-      />
-    </ActivitiesStack.Navigator>
-  );
-}
-
-function JournalStackNavigator() {
-  const theme = useTheme();
-  return (
-    <JournalStack.Navigator
-      screenOptions={{
-        headerTintColor: theme.colors.primary,
-        headerStyle: {backgroundColor: theme.colors.bgLight},
-        headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
-      }}>
-      <JournalStack.Screen
-        name="Journal"
-        component={JournalScreen}
-        options={{headerShown: false}}
-      />
-      <JournalStack.Screen
-        name="PageEditor"
-        component={PageEditorScreen}
-        options={{headerTitle: 'Page'}}
-      />
-      <JournalStack.Screen
-        name="PageList"
-        component={PageListScreen}
-        options={{headerTitle: 'All Pages'}}
-      />
-    </JournalStack.Navigator>
-  );
-}
+// ── Auth Navigator ──────────────────────────────────────────────────
 
 function AuthNavigator() {
   return (
@@ -244,8 +154,28 @@ function AuthNavigator() {
   );
 }
 
+// ── Main Navigator (dynamic tabs from registry) ─────────────────────
+
 function MainNavigator() {
   const theme = useTheme();
+
+  // Get enabled plugins with tab registrations, sorted by order
+  const tabPlugins = useMemo(() => registry.getTabPlugins(), []);
+
+  // Build stack navigator components for each tab plugin (memoized)
+  const stackNavigators = useMemo(() => {
+    const navMap = new Map<string, React.ComponentType<any>>();
+    for (const plugin of tabPlugins) {
+      // For plugins with a single screen, use the component directly
+      if (plugin.tabRegistration!.stack.length === 1) {
+        navMap.set(plugin.id, plugin.tabRegistration!.stack[0].component);
+      } else {
+        navMap.set(plugin.id, createPluginStackNavigator(plugin));
+      }
+    }
+    return navMap;
+  }, [tabPlugins]);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -266,59 +196,31 @@ function MainNavigator() {
           ...theme.shadows.sm,
         },
       }}>
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNavigator}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Home" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="StreaksTab"
-        component={StreaksStackNavigator}
-        options={{
-          tabBarLabel: 'Streaks',
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Streaks" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ActivitiesTab"
-        component={ActivitiesStackNavigator}
-        options={{
-          tabBarLabel: 'Activities',
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Activities" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="JournalTab"
-        component={JournalStackNavigator}
-        options={{
-          tabBarLabel: 'Journal',
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Journal" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="SettingsTab"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Settings',
-          tabBarIcon: ({focused}) => (
-            <TabIcon label="Settings" focused={focused} />
-          ),
-        }}
-      />
+      {tabPlugins.map(plugin => {
+        const tab = plugin.tabRegistration!;
+        const tabName = `${tab.label}Tab`;
+        const StackNav = stackNavigators.get(plugin.id)!;
+        const iconConfig = tab.icon;
+
+        return (
+          <Tab.Screen
+            key={plugin.id}
+            name={tabName}
+            component={StackNav}
+            options={{
+              tabBarLabel: tab.label,
+              tabBarIcon: ({focused}) => (
+                <TabIcon icon={iconConfig} focused={focused} />
+              ),
+            }}
+          />
+        );
+      })}
     </Tab.Navigator>
   );
 }
+
+// ── Loading Screen ──────────────────────────────────────────────────
 
 function useLoadingStyles(theme: Theme) {
   return useMemo(
@@ -346,6 +248,8 @@ function useLoadingStyles(theme: Theme) {
     [theme],
   );
 }
+
+// ── Root Navigator ──────────────────────────────────────────────────
 
 export default function AppNavigator() {
   const theme = useTheme();

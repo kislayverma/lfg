@@ -5,6 +5,9 @@ import {normalizeActivityName, randomActivityColor} from '../utils/string';
 import {toMidnightTimestamp} from '../utils/date';
 import {updateActivityStreak} from '../services/streakEngine';
 import {useAuthStore} from '../stores/authStore';
+import {eventBus} from '../plugins/eventBus';
+import {ACTIVITY_LOGGED} from '../plugins/events';
+import type {ActivityLoggedPayload} from '../plugins/events';
 
 /**
  * Hook to observe all activities for the current user,
@@ -147,6 +150,15 @@ export async function logActivity(params: {
   }
 
   const streak = await updateActivityStreak(activity!.id);
+
+  // Emit event for cross-plugin subscribers (e.g. streaks plugin for
+  // background streak notifications, journal integration, etc.)
+  eventBus.emit<ActivityLoggedPayload>(ACTIVITY_LOGGED, {
+    activityId: activity!.id,
+    logDate,
+    source: params.source || 'manual',
+  });
+
   return {activityId: activity!.id, streak};
 }
 

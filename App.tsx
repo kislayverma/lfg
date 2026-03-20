@@ -4,6 +4,10 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {NavigationContainer, type LinkingOptions} from '@react-navigation/native';
 import {DatabaseProvider} from '@nozbe/watermelondb/react';
 
+// Plugin system -- MUST be imported before database so plugins are
+// registered before database reads model classes from the registry.
+import {registry, createPluginContext} from './src/plugins';
+
 import {database} from './src/database';
 import {ThemeProvider, useTheme} from './src/theme';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -11,13 +15,7 @@ import Toast from './src/components/Toast';
 import ConfettiOverlay from './src/components/ConfettiOverlay';
 import StreakCelebration from './src/components/StreakCelebration';
 import {useUIStore} from './src/stores/uiStore';
-import {
-  setupNotificationChannels,
-  setupIOSCategories,
-  subscribeForegroundEvents,
-} from './src/services/notifications';
-import {configureBackgroundFetch} from './src/services/backgroundTasks';
-import {recalculateAllStreaks} from './src/services/streakEngine';
+import {useAuthStore} from './src/stores/authStore';
 import {preloadSounds} from './src/services/feedback';
 
 function ConfettiBanner() {
@@ -119,22 +117,30 @@ function AppContent() {
   const appState = useRef(AppState.currentState);
 
   useEffect(() => {
-    // Initialize notification channels (Android) and iOS categories
-    setupNotificationChannels();
-    setupIOSCategories();
+    // ── Plugin Lifecycle: Activate all enabled plugins ──
+    const pluginContext = createPluginContext({
+      getDatabase: () => database,
+      getCurrentUserId: () => useAuthStore.getState().currentUser?.id ?? null,
+      getTheme: () => theme,
+      showToast: (message: string) => useUIStore.getState().showToast(message),
+      showConfetti: (message?: string) =>
+        useUIStore.getState().showConfetti(message ?? ''),
+      showCelebration: (streak: number) =>
+        useUIStore.getState().showCelebration(streak),
+    });
+
+    registry.activateAll(pluginContext);
+
+    // Validate plugin dependencies
+    const problems = registry.validateDependencies();
+    if (problems.length > 0) {
+      console.warn('[PluginRegistry] Dependency issues:', problems);
+    }
 
     // Preload celebration sound effects
     preloadSounds();
 
-    // Subscribe to foreground notification events
-    const unsubscribeNotifications = subscribeForegroundEvents();
-
-    // Configure background fetch for nightly streak recalculation
-    configureBackgroundFetch().catch(err =>
-      console.error('[BackgroundFetch] configuration error:', err),
-    );
-
-    // Recalculate streaks when app comes to foreground
+    // Run foreground tasks for all enabled plugins when app comes to foreground
     const appStateSubscription = AppState.addEventListener(
       'change',
       nextAppState => {
@@ -142,8 +148,8 @@ function AppContent() {
           appState.current.match(/inactive|background/) &&
           nextAppState === 'active'
         ) {
-          recalculateAllStreaks().catch(err =>
-            console.error('Foreground streak recalc error:', err),
+          registry.runForegroundTasks().catch(err =>
+            console.error('[Plugins] foreground task error:', err),
           );
         }
         appState.current = nextAppState;
@@ -151,8 +157,8 @@ function AppContent() {
     );
 
     return () => {
-      unsubscribeNotifications();
       appStateSubscription.remove();
+      registry.deactivateAll();
     };
   }, []);
 
