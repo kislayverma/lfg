@@ -7,7 +7,7 @@ import notifee, {
   type Event,
 } from '@notifee/react-native';
 import {NativeModules, Platform} from 'react-native';
-import {database, Activity, ActivityLog, Schedule} from '../database';
+import {database, Activity, ActivityLog, Schedule, NudgeHistory} from '../database';
 import {Q} from '@nozbe/watermelondb';
 import {expandRRule} from './rruleHelper';
 import {useAuthStore} from '../stores/authStore';
@@ -323,6 +323,132 @@ export async function handleNotificationEvent(event: Event): Promise<void> {
     }
   }
 
+  // ── Smart nudge: "Log it now" action ──
+  if (
+    type === EventType.ACTION_PRESS &&
+    detail.pressAction?.id === 'nudge-log'
+  ) {
+    const data = detail.notification?.data;
+    if (!data?.activityId) {
+      return;
+    }
+
+    const activityId = data.activityId as string;
+    const nudgeDate = (data.nudgeDate as number) || toMidnightTimestamp(new Date());
+
+    try {
+      const userId = useAuthStore.getState().currentUser?.id;
+      if (!userId) {
+        return;
+      }
+
+      const logsCollection = database.get<ActivityLog>('activity_logs');
+      const activitiesCollection = database.get<Activity>('activities');
+      const activity = await activitiesCollection.find(activityId);
+
+      await database.write(async () => {
+        await logsCollection.create(log => {
+          log.userId = userId;
+          log.activityId = activityId;
+          log.logDate = nudgeDate;
+          log.logTime = null;
+          log.comment = null;
+          log.source = 'scheduled';
+          log.scheduleId = null;
+        });
+        await activity.update(a => {
+          a.lastLoggedAt = Date.now();
+        });
+      });
+
+      // Update nudge history to 'acted'
+      await updateNudgeOutcome(
+        detail.notification?.id || null,
+        'acted',
+      );
+
+      eventBus.emit<ActivityLoggedPayload>(ACTIVITY_LOGGED, {
+        activityId,
+        logDate: nudgeDate,
+        source: 'notification',
+      });
+    } catch (error) {
+      console.error('Error handling nudge Log it now action:', error);
+    }
+  }
+
+  // ── Smart nudge: "Snooze 1hr" action ──
+  if (
+    type === EventType.ACTION_PRESS &&
+    detail.pressAction?.id === 'nudge-snooze'
+  ) {
+    const data = detail.notification?.data;
+    if (!data?.activityId) {
+      return;
+    }
+
+    try {
+      const activityId = data.activityId as string;
+      const snoozeUntil = Date.now() + 60 * 60 * 1000; // 1 hour from now
+
+      // Reschedule the same notification 1 hour later
+      const snoozeNotificationId = `nudge-snooze-${activityId}-${Date.now()}`;
+
+      let activityName: string;
+      try {
+        const activity = await database
+          .get<Activity>('activities')
+          .find(activityId);
+        activityName = activity.name;
+      } catch {
+        activityName = 'your activity';
+      }
+
+      const trigger: TimestampTrigger = {
+        type: TriggerType.TIMESTAMP,
+        timestamp: snoozeUntil,
+      };
+
+      await notifee.createTriggerNotification(
+        {
+          id: snoozeNotificationId,
+          title: `Reminder: ${activityName}`,
+          body: 'Snoozed nudge — ready now?',
+          data: {
+            type: 'smart-nudge',
+            activityId,
+            nudgeDate: data.nudgeDate || toMidnightTimestamp(new Date()),
+          },
+          android: {
+            channelId: 'smart-nudges',
+            pressAction: {id: 'default'},
+            actions: [
+              {
+                title: 'Log it now',
+                pressAction: {id: 'nudge-log'},
+              },
+            ],
+            smallIcon: 'ic_notification',
+            importance: AndroidImportance.DEFAULT,
+          },
+          ios: {
+            categoryId: 'smart-nudge',
+            sound: 'default',
+          },
+        },
+        trigger,
+      );
+
+      // Update nudge history to 'snoozed'
+      await updateNudgeOutcome(
+        detail.notification?.id || null,
+        'snoozed',
+      );
+    } catch (error) {
+      console.error('Error handling nudge Snooze action:', error);
+    }
+  }
+
   // Replenish triggers if running low
   if (type === EventType.DELIVERED) {
     try {
@@ -448,4 +574,34 @@ function formatReminderBody(offsetMinutes: number): string {
     return `Starting in ${hours} hour${hours > 1 ? 's' : ''}`;
   }
   return `Starting in ${offsetMinutes} minutes`;
+}
+
+/**
+ * Updates the outcome of a nudge in the nudge_history table.
+ * Matches by notification_id.
+ */
+async function updateNudgeOutcome(
+  notificationId: string | null,
+  outcome: 'acted' | 'snoozed' | 'dismissed',
+): Promise<void> {
+  if (!notificationId) {
+    return;
+  }
+
+  try {
+    const records = await database
+      .get<NudgeHistory>('nudge_history')
+      .query(Q.where('notification_id', notificationId))
+      .fetch();
+
+    if (records.length > 0) {
+      await database.write(async () => {
+        await records[0].update(r => {
+          r.outcome = outcome;
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Error updating nudge outcome:', error);
+  }
 }

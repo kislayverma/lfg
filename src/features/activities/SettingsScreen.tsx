@@ -20,6 +20,7 @@ import {
   cancelRemindersForSchedule,
   replenishAllReminders,
 } from '../../services/notifications';
+import {cancelAllNudges} from '../../services/nudgeScheduler';
 import {useUIStore} from '../../stores/uiStore';
 import {useAuthStore} from '../../stores/authStore';
 import {usePreferencesStore} from '../../stores/preferencesStore';
@@ -47,6 +48,8 @@ export default function SettingsScreen() {
     setDefaultReminderMinutes,
     celebrationNotificationsEnabled,
     setCelebrationNotificationsEnabled,
+    smartNudgesEnabled,
+    setSmartNudgesEnabled,
   } = usePreferencesStore();
   const styles = useStyles(theme);
 
@@ -124,6 +127,23 @@ export default function SettingsScreen() {
       );
     },
     [setCelebrationNotificationsEnabled, showToast],
+  );
+
+  const handleToggleSmartNudges = useCallback(
+    async (enabled: boolean) => {
+      setSmartNudgesEnabled(enabled);
+      if (!enabled) {
+        try {
+          await cancelAllNudges();
+        } catch (error) {
+          console.error('Error cancelling nudges:', error);
+        }
+      }
+      showToast(
+        enabled ? 'Smart nudges enabled' : 'Smart nudges disabled',
+      );
+    },
+    [setSmartNudgesEnabled, showToast],
   );
 
   const handleChangeReminderMinutes = useCallback(
@@ -386,6 +406,33 @@ export default function SettingsScreen() {
               }}
               thumbColor={
                 celebrationNotificationsEnabled
+                  ? theme.colors.primary
+                  : theme.colors.textMuted
+              }
+            />
+          </View>
+
+          <View style={styles.rowDivider} />
+
+          <View style={styles.row}>
+            <View style={styles.rowIconContainer}>
+              <Text style={styles.rowIcon}>{'\u{1F9E0}'}</Text>
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={styles.rowTitle}>Smart Nudges</Text>
+              <Text style={styles.rowSubtitle}>
+                Learns your patterns and gently reminds you
+              </Text>
+            </View>
+            <Switch
+              value={smartNudgesEnabled}
+              onValueChange={handleToggleSmartNudges}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primaryPale,
+              }}
+              thumbColor={
+                smartNudgesEnabled
                   ? theme.colors.primary
                   : theme.colors.textMuted
               }

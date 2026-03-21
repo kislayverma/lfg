@@ -1,7 +1,7 @@
 import {appSchema, tableSchema} from '@nozbe/watermelondb';
 
 export const schema = appSchema({
-  version: 6,
+  version: 7,
   tables: [
     tableSchema({
       name: 'users',
@@ -84,6 +84,30 @@ export const schema = appSchema({
         {name: 'user_id', type: 'string', isIndexed: true},
         {name: 'source_page_id', type: 'string', isIndexed: true},
         {name: 'target_title_normalized', type: 'string', isIndexed: true},
+        {name: 'created_at', type: 'number'},
+      ],
+    }),
+    tableSchema({
+      name: 'detected_patterns',
+      columns: [
+        {name: 'user_id', type: 'string', isIndexed: true},
+        {name: 'activity_id', type: 'string', isIndexed: true},
+        {name: 'pattern_type', type: 'string'},
+        {name: 'pattern_data', type: 'string'},
+        {name: 'confidence', type: 'number'},
+        {name: 'sample_size', type: 'number'},
+        {name: 'last_calculated_at', type: 'number'},
+        {name: 'created_at', type: 'number'},
+      ],
+    }),
+    tableSchema({
+      name: 'nudge_history',
+      columns: [
+        {name: 'user_id', type: 'string', isIndexed: true},
+        {name: 'activity_id', type: 'string', isIndexed: true},
+        {name: 'nudge_sent_at', type: 'number', isIndexed: true},
+        {name: 'outcome', type: 'string'},
+        {name: 'notification_id', type: 'string', isOptional: true},
         {name: 'created_at', type: 'number'},
       ],
     }),

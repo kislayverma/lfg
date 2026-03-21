@@ -1,8 +1,24 @@
 import {useState, useEffect, useCallback, useRef, useMemo} from 'react';
-import {database, JournalPage, JournalLink} from '../../../database';
+import {database, JournalPage, JournalLink, ActivityLog} from '../../../database';
 import {Q} from '@nozbe/watermelondb';
 import {useAuthStore} from '../../../stores/authStore';
-import {extractWikiLinks} from '../utils/linkExtractor';
+import {extractWikiLinks, autoLinkPageReferences} from '../utils/linkExtractor';
+import {logActivity} from '../../../hooks/useActivities';
+import {toMidnightTimestamp} from '../../../utils/date';
+
+/**
+ * Activity name used when logging note-taking as an activity.
+ * All note saves are tracked under this single activity so streaks
+ * are calculated for the writing habit as a whole.
+ */
+export const NOTE_TAKING_ACTIVITY_NAME = 'Note Taking';
+
+/**
+ * Module-level flag to avoid duplicate activity logs within the same
+ * app session. Reset on cold start. The DB check still prevents
+ * cross-session duplicates.
+ */
+let loggedTodayTimestamp: number | null = null;
 
 /**
  * Loads or creates a journal page by title.
@@ -108,14 +124,24 @@ export function useJournalPage(title: string, pageType: 'daily' | 'page') {
           });
         });
 
-        // Rebuild link index for this page
-        await rebuildLinks(page.id, userId!, newContent);
+        // Rebuild link index (and auto-link page references)
+        const finalContent = await rebuildLinks(
+          page.id,
+          userId!,
+          newContent,
+          title,
+        );
+
+        // If auto-linking changed the content, update local state
+        if (finalContent !== newContent) {
+          setContent(finalContent);
+        }
 
         // Allow observer to sync again after save completes
         isEditingRef.current = false;
       }, 500);
     },
-    [page, userId],
+    [page, userId, title],
   );
 
   // Cleanup timer on unmount
@@ -145,53 +171,234 @@ export function useJournalPage(title: string, pageType: 'daily' | 'page') {
       });
     });
 
-    await rebuildLinks(page.id, userId!, content);
-    isEditingRef.current = false;
-  }, [page, content, userId]);
+    const finalContent = await rebuildLinks(page.id, userId!, content, title);
+    if (finalContent !== content) {
+      setContent(finalContent);
+    }
 
-  return {page, content, setContent: saveContent, isLoading, flushSave};
+    // Log note-taking as an activity (once per day) for streak tracking
+    await logNoteTakingActivity();
+
+    isEditingRef.current = false;
+  }, [page, content, userId, title]);
+
+  // Rename the page and update all references across the journal
+  const renamePage = useCallback(
+    async (newTitle: string) => {
+      if (!page || !userId) {
+        return;
+      }
+      const trimmed = newTitle.trim();
+      if (trimmed.length === 0 || trimmed === page.title) {
+        return;
+      }
+
+      const oldTitle = page.title;
+      const oldNormalized = page.titleNormalized;
+      const newNormalized = trimmed.toLowerCase();
+
+      // 1. Update the page record itself
+      await database.write(async () => {
+        await page.update(p => {
+          p.title = trimmed;
+          p.titleNormalized = newNormalized;
+          p.updatedAt = Date.now();
+        });
+      });
+
+      // 2. Find all pages that contain [[old title]] and replace with [[new title]]
+      const pageCollection = database.get<JournalPage>('journal_pages');
+      const allPages = await pageCollection
+        .query(Q.where('user_id', userId))
+        .fetch();
+
+      // Build a case-insensitive regex for [[old title]]
+      const escaped = oldTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const linkRegex = new RegExp(
+        `\\[\\[${escaped}\\]\\]`,
+        'gi',
+      );
+
+      const pagesToUpdate = allPages.filter(
+        p => p.id !== page.id && linkRegex.test(p.content),
+      );
+
+      if (pagesToUpdate.length > 0) {
+        await database.write(async () => {
+          await database.batch(
+            ...pagesToUpdate.map(p =>
+              p.prepareUpdate(record => {
+                record.content = record.content.replace(
+                  linkRegex,
+                  `[[${trimmed}]]`,
+                );
+                record.updatedAt = Date.now();
+              }),
+            ),
+          );
+        });
+      }
+
+      // 3. Update journal_links that point to the old normalized title
+      const linkCollection = database.get<JournalLink>('journal_links');
+      const linksToUpdate = await linkCollection
+        .query(
+          Q.where('user_id', userId),
+          Q.where('target_title_normalized', oldNormalized),
+        )
+        .fetch();
+
+      if (linksToUpdate.length > 0) {
+        await database.write(async () => {
+          await database.batch(
+            ...linksToUpdate.map(l =>
+              l.prepareUpdate((record: any) => {
+                record.targetTitleNormalized = newNormalized;
+              }),
+            ),
+          );
+        });
+      }
+    },
+    [page, userId],
+  );
+
+  return {page, content, setContent: saveContent, isLoading, flushSave, renamePage};
+}
+
+/**
+ * Logs note-taking as an activity (once per day) so streaks are tracked.
+ * Uses a fast in-memory flag + DB dedup check to avoid duplicate logs.
+ */
+async function logNoteTakingActivity(): Promise<void> {
+  const today = toMidnightTimestamp(new Date());
+
+  // Fast path: already logged this session today
+  if (loggedTodayTimestamp === today) {
+    return;
+  }
+
+  const userId = useAuthStore.getState().currentUser?.id;
+  if (!userId) {
+    return;
+  }
+
+  // DB check: has this activity been logged today already?
+  const existingLogs = await database
+    .get<ActivityLog>('activity_logs')
+    .query(
+      Q.where('user_id', userId),
+      Q.where('log_date', today),
+    )
+    .fetch();
+
+  // Check if any of today's logs are for the note-taking activity
+  // We need the activity ID, so look it up by normalized name
+  const normalizedName = NOTE_TAKING_ACTIVITY_NAME.trim().toLowerCase();
+  const activities = await database
+    .get('activities')
+    .query(
+      Q.where('user_id', userId),
+      Q.where('name_normalized', normalizedName),
+    )
+    .fetch();
+
+  if (activities.length > 0) {
+    const activityId = activities[0].id;
+    const alreadyLogged = existingLogs.some(
+      (l: any) => l.activityId === activityId,
+    );
+    if (alreadyLogged) {
+      loggedTodayTimestamp = today;
+      return;
+    }
+  }
+
+  try {
+    await logActivity({
+      name: NOTE_TAKING_ACTIVITY_NAME,
+      date: new Date(),
+      source: 'manual',
+    });
+    loggedTodayTimestamp = today;
+  } catch (error) {
+    console.error('[Journal] Error logging note-taking activity:', error);
+  }
 }
 
 /**
  * Rebuilds the journal_links for a given page.
- * Diffs existing links against parsed links and batch-updates.
+ * Also runs auto-linking: detects plain-text mentions of existing page
+ * titles and wraps them in [[...]]. If content was modified by auto-linking,
+ * the page record is updated and the new content is returned.
+ *
+ * @returns The (possibly auto-linked) content string.
  */
 async function rebuildLinks(
   pageId: string,
   userId: string,
   content: string,
-): Promise<void> {
+  pageTitle: string,
+): Promise<string> {
+  const pageCollection = database.get<JournalPage>('journal_pages');
   const linkCollection = database.get<JournalLink>('journal_links');
 
-  // Get current links for this page
-  const existing = await linkCollection
+  // Load all existing page titles for auto-linking (fast: title fields only)
+  const allPages = await pageCollection
+    .query(
+      Q.where('user_id', userId),
+      Q.where('page_type', 'page'),
+    )
+    .fetch();
+
+  const pageTitles = allPages.map(p => ({
+    title: p.title,
+    titleNormalized: p.titleNormalized,
+  }));
+
+  // Auto-link plain-text references to existing pages
+  const linkedContent = autoLinkPageReferences(content, pageTitles, pageTitle);
+
+  // If auto-linking changed the content, persist the update
+  if (linkedContent !== content) {
+    const page = await pageCollection.find(pageId);
+    await database.write(async () => {
+      await page.update(p => {
+        p.content = linkedContent;
+        p.updatedAt = Date.now();
+      });
+    });
+  }
+
+  // Now extract wiki links from the (possibly modified) content
+  const existingLinks = await linkCollection
     .query(Q.where('source_page_id', pageId))
     .fetch();
 
-  const existingTargets = new Set(existing.map(l => l.targetTitleNormalized));
-  const newTargets = new Set(extractWikiLinks(content));
+  const existingTargets = new Set(existingLinks.map(l => l.targetTitleNormalized));
+  const newTargets = new Set(extractWikiLinks(linkedContent));
 
   // Links to add (in new but not in existing)
   const toAdd = [...newTargets].filter(t => !existingTargets.has(t));
   // Links to remove (in existing but not in new)
-  const toRemove = existing.filter(l => !newTargets.has(l.targetTitleNormalized));
+  const toRemove = existingLinks.filter(l => !newTargets.has(l.targetTitleNormalized));
 
-  if (toAdd.length === 0 && toRemove.length === 0) {
-    return;
+  if (toAdd.length > 0 || toRemove.length > 0) {
+    await database.write(async () => {
+      await database.batch(
+        ...toAdd.map(target =>
+          linkCollection.prepareCreate(l => {
+            l.userId = userId;
+            l.sourcePageId = pageId;
+            l.targetTitleNormalized = target;
+          }),
+        ),
+        ...toRemove.map(l => l.prepareDestroyPermanently()),
+      );
+    });
   }
 
-  await database.write(async () => {
-    await database.batch(
-      ...toAdd.map(target =>
-        linkCollection.prepareCreate(l => {
-          l.userId = userId;
-          l.sourcePageId = pageId;
-          l.targetTitleNormalized = target;
-        }),
-      ),
-      ...toRemove.map(l => l.prepareDestroyPermanently()),
-    );
-  });
+  return linkedContent;
 }
 
 /**

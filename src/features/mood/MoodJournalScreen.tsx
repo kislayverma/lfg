@@ -24,7 +24,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
-import {useTheme, spacing, radius, typography} from '../../theme';
+import {useTheme, spacing, radius} from '../../theme';
 import type {Theme} from '../../theme/types';
 import {logActivity} from '../../hooks/useActivities';
 import {useUIStore} from '../../stores/uiStore';
@@ -111,10 +111,6 @@ export default function MoodJournalScreen() {
 
           <Text style={styles.moodDescription}>{moodDescription}</Text>
 
-          <Text style={styles.journalPrompt}>
-            How are you feeling? Write as much or as little as you want.
-          </Text>
-
           <View style={[styles.inputContainer, theme.glassCard]}>
             <TextInput
               ref={inputRef}
@@ -180,20 +176,13 @@ const useStyles = (theme: Theme) =>
           fontSize: 14,
           color: theme.colors.textMuted,
           textAlign: 'center',
-          marginBottom: spacing.xxxl,
-          lineHeight: 20,
-        },
-        journalPrompt: {
-          ...typography.heading,
-          color: theme.colors.text,
-          fontSize: 18,
           marginBottom: spacing.lg,
+          lineHeight: 20,
         },
         inputContainer: {
           flex: 1,
           borderRadius: radius.lg,
           padding: spacing.lg,
-          maxHeight: 200,
         },
         textInput: {
           flex: 1,

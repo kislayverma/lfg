@@ -24,6 +24,7 @@ import {activitiesPlugin} from '../features/activities/plugin';
 import {streaksPlugin} from '../features/streaks/plugin';
 import {journalPlugin} from '../features/journal/plugin';
 import {moodPlugin} from '../features/mood/plugin';
+import {smartNudgePlugin} from '../features/smartNudge/plugin';
 
 // Register all plugins
 registry.register(authPlugin);
@@ -33,6 +34,7 @@ registry.register(activitiesPlugin);
 registry.register(streaksPlugin);
 registry.register(journalPlugin);
 registry.register(moodPlugin);
+registry.register(smartNudgePlugin);
 
 export {registry};
 export {eventBus} from './eventBus';

@@ -5,6 +5,8 @@ import ScheduleException from './ScheduleException';
 import User from './User';
 import JournalPage from './JournalPage';
 import JournalLink from './JournalLink';
+import DetectedPattern from './DetectedPattern';
+import NudgeHistory from './NudgeHistory';
 
 export {
   Activity,
@@ -14,4 +16,6 @@ export {
   User,
   JournalPage,
   JournalLink,
+  DetectedPattern,
+  NudgeHistory,
 };

@@ -21,6 +21,8 @@ import {
   User,
   JournalPage,
   JournalLink,
+  DetectedPattern,
+  NudgeHistory,
 } from './models';
 
 const adapter = new SQLiteAdapter({
@@ -42,6 +44,8 @@ export const database = new Database({
     User,
     JournalPage,
     JournalLink,
+    DetectedPattern,
+    NudgeHistory,
   ],
 });
 
@@ -53,4 +57,6 @@ export {
   User,
   JournalPage,
   JournalLink,
+  DetectedPattern,
+  NudgeHistory,
 };

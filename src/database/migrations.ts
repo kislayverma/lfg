@@ -8,6 +8,35 @@ import {
 export const migrations = schemaMigrations({
   migrations: [
     {
+      toVersion: 7,
+      steps: [
+        createTable({
+          name: 'detected_patterns',
+          columns: [
+            {name: 'user_id', type: 'string', isIndexed: true},
+            {name: 'activity_id', type: 'string', isIndexed: true},
+            {name: 'pattern_type', type: 'string'},
+            {name: 'pattern_data', type: 'string'},
+            {name: 'confidence', type: 'number'},
+            {name: 'sample_size', type: 'number'},
+            {name: 'last_calculated_at', type: 'number'},
+            {name: 'created_at', type: 'number'},
+          ],
+        }),
+        createTable({
+          name: 'nudge_history',
+          columns: [
+            {name: 'user_id', type: 'string', isIndexed: true},
+            {name: 'activity_id', type: 'string', isIndexed: true},
+            {name: 'nudge_sent_at', type: 'number', isIndexed: true},
+            {name: 'outcome', type: 'string'},
+            {name: 'notification_id', type: 'string', isOptional: true},
+            {name: 'created_at', type: 'number'},
+          ],
+        }),
+      ],
+    },
+    {
       toVersion: 6,
       steps: [
         createTable({

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState, useMemo} from 'react';
+import React, {useCallback, useEffect, useState, useMemo, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Animated,
+  PanResponder,
   LayoutChangeEvent,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -146,6 +148,9 @@ const useStyles = (theme: Theme) =>
             : 'rgba(0,0,0,0.4)',
           justifyContent: 'flex-end',
         },
+        sheetOverlayDismiss: {
+          flex: 1,
+        },
         sheet: {
           backgroundColor: theme.colors.bgLight,
           borderTopLeftRadius: radius.xl,
@@ -157,14 +162,16 @@ const useStyles = (theme: Theme) =>
         sheetExpanded: {
           maxHeight: '80%',
         },
+        sheetDragArea: {
+          alignItems: 'center',
+          paddingTop: spacing.sm,
+          paddingBottom: spacing.xs,
+        },
         sheetHandle: {
           width: 36,
           height: 4,
           borderRadius: 2,
           backgroundColor: theme.colors.border,
-          alignSelf: 'center',
-          marginTop: spacing.sm,
-          marginBottom: spacing.md,
         },
         sheetTitle: {
           fontSize: 20,
@@ -699,6 +706,46 @@ function DayDetailSheet({
   const [confirmStopAll, setConfirmStopAll] = useState(false);
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
 
+  // Swipe-to-dismiss
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scrollOffsetRef = useRef(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gs) => {
+        // Only capture if swiping down AND the scroll is at the top
+        return (
+          gs.dy > 10 &&
+          Math.abs(gs.dy) > Math.abs(gs.dx) * 1.5 &&
+          scrollOffsetRef.current <= 0
+        );
+      },
+      onPanResponderMove: (_, gs) => {
+        if (gs.dy > 0) {
+          translateY.setValue(gs.dy);
+        }
+      },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          Animated.timing(translateY, {
+            toValue: 500,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => onCloseRef.current());
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 8,
+          }).start();
+        }
+      },
+    }),
+  ).current;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const isPastDate = date < today;
@@ -716,15 +763,27 @@ function DayDetailSheet({
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.sheetOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.sheet, commentingId ? styles.sheetExpanded : null]}
-          onPress={e => e.stopPropagation()}>
-          <View style={styles.sheetHandle} />
+      <View style={styles.sheetOverlay}>
+        <Pressable style={styles.sheetOverlayDismiss} onPress={onClose} />
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.sheet,
+            commentingId ? styles.sheetExpanded : null,
+            {transform: [{translateY}]},
+          ]}>
+          <View style={styles.sheetDragArea}>
+            <View style={styles.sheetHandle} />
+          </View>
           <Text style={styles.sheetTitle}>{dateLabel}</Text>
 
           <ScrollView
             style={styles.sheetContent}
+            nestedScrollEnabled
+            scrollEventThrottle={16}
+            onScroll={e => {
+              scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+            }}
             keyboardShouldPersistTaps="handled">
             {/* Scheduled activities (hide completed ones — they appear under Logged) */}
             {scheduledItems.some(({schedule}) => !doneScheduleIds.has(schedule.id)) && (
@@ -962,8 +1021,8 @@ function DayDetailSheet({
               </Text>
             </TouchableOpacity>
           </View>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </View>
     </Modal>
   );
 }

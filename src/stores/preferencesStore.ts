@@ -8,6 +8,7 @@ const KEY_CALENDAR_SYNC = 'pref_calendar_sync';
 const KEY_NOTIFICATIONS_ENABLED = 'pref_notifications_enabled';
 const KEY_REMINDER_MINUTES = 'pref_reminder_minutes';
 const KEY_CELEBRATION_NOTIFICATIONS = 'pref_celebration_notifications';
+const KEY_SMART_NUDGES = 'pref_smart_nudges';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -27,6 +28,10 @@ interface PreferencesState {
   /** Whether to show celebration notifications on streak milestones */
   celebrationNotificationsEnabled: boolean;
   setCelebrationNotificationsEnabled: (enabled: boolean) => void;
+
+  /** Whether smart nudge notifications are enabled */
+  smartNudgesEnabled: boolean;
+  setSmartNudgesEnabled: (enabled: boolean) => void;
 }
 
 // ── Store ───────────────────────────────────────────────────────────
@@ -67,5 +72,11 @@ export const usePreferencesStore = create<PreferencesState>(set => ({
   setCelebrationNotificationsEnabled: (enabled: boolean) => {
     storage.set(KEY_CELEBRATION_NOTIFICATIONS, String(enabled));
     set({celebrationNotificationsEnabled: enabled});
+  },
+
+  smartNudgesEnabled: readBool(KEY_SMART_NUDGES, true),
+  setSmartNudgesEnabled: (enabled: boolean) => {
+    storage.set(KEY_SMART_NUDGES, String(enabled));
+    set({smartNudgesEnabled: enabled});
   },
 }));
