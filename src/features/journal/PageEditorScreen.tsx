@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   Keyboard,
   type NativeSyntheticEvent,
@@ -16,6 +15,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 import {useJournalPage, useBacklinks} from './hooks/useJournalPage';
 import {useVoiceInput} from './hooks/useVoiceInput';
@@ -37,11 +37,11 @@ export default function PageEditorScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
 
-  const {title, pageType} = route.params;
+  const {title, pageType, mode} = route.params;
   const {page, content, setContent, isLoading, flushSave, renamePage} =
     useJournalPage(title, pageType || 'page');
 
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(mode !== 'preview');
   const [showBacklinks, setShowBacklinks] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -204,10 +204,7 @@ export default function PageEditorScreen() {
       });
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={100}>
+    <ScreenWrapper keyboard>
       {/* Header */}
       <View style={styles.header}>
         {isPage ? (
@@ -278,7 +275,8 @@ export default function PageEditorScreen() {
                 flushSave();
                 navigation.push('PageEditor', {
                   title: bl.title,
-                  pageType: 'page',
+                  pageType: bl.pageType,
+                  mode: 'preview',
                 });
               }}
               activeOpacity={0.7}>
@@ -352,17 +350,18 @@ export default function PageEditorScreen() {
           {/* Backlinks */}
           <BacklinksSection
             titleNormalized={title.toLowerCase()}
-            onNavigateToPage={linkTitle => {
+            onNavigateToPage={(linkTitle, linkPageType) => {
               flushSave();
               navigation.push('PageEditor', {
                 title: linkTitle,
-                pageType: 'page',
+                pageType: linkPageType,
+                mode: 'preview',
               });
             }}
           />
         </ScrollView>
       )}
-    </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 
@@ -373,6 +372,9 @@ const useStyles = (theme: Theme) =>
         container: {
           flex: 1,
           backgroundColor: theme.colors.bg,
+        },
+        flex: {
+          flex: 1,
         },
         loadingContainer: {
           flex: 1,
@@ -474,7 +476,10 @@ const useStyles = (theme: Theme) =>
         backlinksDropdownItem: {
           flexDirection: 'row',
           alignItems: 'center',
-          paddingVertical: spacing.xs,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.sm,
+          minHeight: 44,
+          borderRadius: radius.sm,
         },
         backlinksDropdownIcon: {
           fontSize: 14,

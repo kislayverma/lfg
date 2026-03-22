@@ -22,6 +22,7 @@
     "react-native-background-fetch": "^4.3.0",
     "react-native-calendar-events": "^2.2.0",
     "react-native-contacts": "^8.0.10",
+    "react-native-fs": "^2.20.0",
     "react-native-haptic-feedback": "^2.3.3",
     "react-native-mmkv": "^4.1.2",
     "react-native-nitro-modules": "^0.33.9",

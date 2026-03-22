@@ -15,8 +15,8 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useTheme, spacing, radius} from '../../theme';
@@ -73,7 +73,7 @@ export default function MoodPickerScreen() {
   }, [category]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <ScreenWrapper edges={[]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -138,7 +138,7 @@ export default function MoodPickerScreen() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

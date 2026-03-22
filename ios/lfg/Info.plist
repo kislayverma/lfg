@@ -60,5 +60,7 @@
 	<string>Speech recognition is used to convert your voice to text in notes.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is required for voice input in notes.</string>
+	<key>AppGroup</key>
+	<string>group.com.lfg.shared</string>
 </dict>
 </plist>

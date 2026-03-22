@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, Linking} from 'react-native';
 import {parseMarkdown, parseInline, type Token} from '../utils/markdownParser';
 import {useTheme, spacing, radius} from '../../../theme';
 import type {Theme} from '../../../theme/types';
@@ -46,7 +46,7 @@ function BlockToken({
   switch (token.type) {
     case 'h1':
       return (
-        <Text style={styles.h1}>
+        <Text selectable style={styles.h1}>
           <InlineTokens
             tokens={token.children || []}
             styles={styles}
@@ -57,7 +57,7 @@ function BlockToken({
       );
     case 'h2':
       return (
-        <Text style={styles.h2}>
+        <Text selectable style={styles.h2}>
           <InlineTokens
             tokens={token.children || []}
             styles={styles}
@@ -68,7 +68,7 @@ function BlockToken({
       );
     case 'h3':
       return (
-        <Text style={styles.h3}>
+        <Text selectable style={styles.h3}>
           <InlineTokens
             tokens={token.children || []}
             styles={styles}
@@ -81,7 +81,7 @@ function BlockToken({
       return (
         <View style={styles.listItem}>
           <Text style={styles.bullet}>{'\u2022'} </Text>
-          <Text style={styles.listText}>
+          <Text selectable style={styles.listText}>
             <InlineTokens
               tokens={token.children || []}
               styles={styles}
@@ -95,7 +95,7 @@ function BlockToken({
       return (
         <View style={styles.listItem}>
           <Text style={styles.bullet}>{token.content ? '' : '1.'} </Text>
-          <Text style={styles.listText}>
+          <Text selectable style={styles.listText}>
             <InlineTokens
               tokens={token.children || []}
               styles={styles}
@@ -112,6 +112,7 @@ function BlockToken({
             {token.checked ? '\u2611' : '\u2610'}{' '}
           </Text>
           <Text
+            selectable
             style={[
               styles.listText,
               token.checked && styles.checkedText,
@@ -128,7 +129,7 @@ function BlockToken({
     case 'blockquote':
       return (
         <View style={styles.blockquote}>
-          <Text style={styles.blockquoteText}>
+          <Text selectable style={styles.blockquoteText}>
             <InlineTokens
               tokens={token.children || []}
               styles={styles}
@@ -141,7 +142,7 @@ function BlockToken({
     case 'codeBlock':
       return (
         <View style={styles.codeBlock}>
-          <Text style={styles.codeBlockText}>{token.content}</Text>
+          <Text selectable style={styles.codeBlockText}>{token.content}</Text>
         </View>
       );
     case 'hr':
@@ -154,7 +155,7 @@ function BlockToken({
         return <View style={styles.newline} />;
       }
       return (
-        <Text style={styles.paragraph}>
+        <Text selectable style={styles.paragraph}>
           <InlineTokens
             tokens={token.children || parseInline(token.content)}
             styles={styles}
@@ -211,6 +212,19 @@ function InlineTokens({
                 key={i}
                 style={styles.wikiLink}
                 onPress={() => onLinkPress?.(token.content)}>
+                {token.content}
+              </Text>
+            );
+          case 'link':
+            return (
+              <Text
+                key={i}
+                style={styles.link}
+                onPress={() => {
+                  if (token.href) {
+                    Linking.openURL(token.href);
+                  }
+                }}>
                 {token.content}
               </Text>
             );
@@ -351,6 +365,10 @@ const useStyles = (theme: Theme) =>
         wikiLink: {
           color: theme.colors.primary,
           fontWeight: '600',
+          textDecorationLine: 'underline',
+        },
+        link: {
+          color: theme.colors.primary,
           textDecorationLine: 'underline',
         },
       }),

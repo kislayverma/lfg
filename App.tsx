@@ -176,6 +176,8 @@ function AppContent() {
     <>
       <StatusBar
         barStyle={theme.statusBarLight ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.bg}
+        translucent={false}
       />
       <AppNavigator />
       <Toast />

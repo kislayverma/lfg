@@ -35,3 +35,8 @@ target 'lfg' do
     )
   end
 end
+
+# Share Extension — only needs MMKV for writing to the shared inbox
+target 'ShareExtension' do
+  pod 'MMKV', '~> 2.0'
+end

@@ -23,6 +23,7 @@ export type TokenType =
   | 'blockquote'
   | 'hr'
   | 'wikiLink'
+  | 'link'
   | 'text'
   | 'newline';
 
@@ -30,6 +31,7 @@ export interface Token {
   type: TokenType;
   content: string;
   checked?: boolean; // for checklist items
+  href?: string; // for markdown links [text](url)
   children?: Token[];
 }
 
@@ -107,6 +109,14 @@ export function parseInline(text: string): Token[] {
     if (wikiMatch) {
       tokens.push({type: 'wikiLink', content: wikiMatch[1].trim()});
       remaining = remaining.slice(wikiMatch[0].length);
+      continue;
+    }
+
+    // Markdown link [text](url)
+    const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
+    if (linkMatch) {
+      tokens.push({type: 'link', content: linkMatch[1], href: linkMatch[2]});
+      remaining = remaining.slice(linkMatch[0].length);
       continue;
     }
 

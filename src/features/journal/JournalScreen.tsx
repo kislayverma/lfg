@@ -8,8 +8,8 @@ import {
   ScrollView,
   Keyboard,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {database, JournalPage} from '../../database';
@@ -145,7 +145,7 @@ export default function JournalScreen() {
   }, [selectedDate]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <ScreenWrapper>
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.screenTitle}>Notes</Text>
@@ -208,10 +208,11 @@ export default function JournalScreen() {
             />
             <BacklinksSection
               titleNormalized={selectedDate.toLowerCase()}
-              onNavigateToPage={linkTitle =>
+              onNavigateToPage={(linkTitle, linkPageType) =>
                 navigation.navigate('PageEditor', {
                   title: linkTitle,
-                  pageType: 'page',
+                  pageType: linkPageType,
+                  mode: 'preview',
                 })
               }
             />
@@ -226,7 +227,7 @@ export default function JournalScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

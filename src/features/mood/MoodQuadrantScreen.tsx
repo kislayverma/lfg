@@ -15,8 +15,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useTheme, spacing, typography} from '../../theme';
 import type {Theme} from '../../theme/types';
@@ -35,7 +35,7 @@ export default function MoodQuadrantScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <ScreenWrapper>
       <View style={styles.topBar}>
         <Text style={styles.screenTitle}>Mood</Text>
         <TouchableOpacity
@@ -61,7 +61,7 @@ export default function MoodQuadrantScreen() {
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

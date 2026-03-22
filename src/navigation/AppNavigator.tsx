@@ -9,7 +9,7 @@
  */
 
 import React, {useEffect, useMemo} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, Platform, StyleSheet, Text, View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
@@ -49,7 +49,7 @@ export type ActivitiesStackParamList = {
 
 export type JournalStackParamList = {
   Journal: undefined;
-  PageEditor: {title: string; pageType?: 'daily' | 'page'};
+  PageEditor: {title: string; pageType?: 'daily' | 'page'; mode?: 'edit' | 'preview'};
   PageList: undefined;
 };
 
@@ -127,8 +127,10 @@ function createPluginStackNavigator(plugin: PluginManifest) {
       <Stack.Navigator
         screenOptions={{
           headerTintColor: theme.colors.primary,
-          headerStyle: {backgroundColor: theme.colors.bgLight},
+          headerStyle: {backgroundColor: theme.colors.bg},
           headerTitleStyle: {color: theme.colors.text, fontWeight: '600'},
+          contentStyle: {backgroundColor: theme.colors.bg},
+          statusBarBackgroundColor: theme.colors.bg,
         }}>
         {plugin.tabRegistration!.stack.map((screen: StackScreen) => (
           <Stack.Screen
@@ -192,8 +194,11 @@ function MainNavigator() {
           borderTopColor: theme.colors.tabBarBorder,
           borderTopWidth: StyleSheet.hairlineWidth,
           paddingTop: 6,
-          height: 88,
+          ...(Platform.OS === 'ios' ? {height: 88} : {}),
           ...theme.shadows.sm,
+        },
+        sceneStyle: {
+          backgroundColor: theme.colors.bg,
         },
       }}>
       {tabPlugins.map(plugin => {

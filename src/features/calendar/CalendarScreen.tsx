@@ -12,8 +12,8 @@ import {
   PanResponder,
   LayoutChangeEvent,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {database, Activity, ActivityLog} from '../../database';
@@ -544,7 +544,7 @@ export default function CalendarScreen() {
   }).length;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       {/* Month header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goToPrevMonth} style={styles.navButton}>
@@ -670,7 +670,7 @@ export default function CalendarScreen() {
           }}
         />
       )}
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

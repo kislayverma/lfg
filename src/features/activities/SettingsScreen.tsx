@@ -8,8 +8,8 @@ import {
   Switch,
   Alert,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {database, Activity, ActivityLog, Schedule} from '../../database';
@@ -245,7 +245,7 @@ export default function SettingsScreen() {
   }, [logout]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.screenTitle}>Settings</Text>
 
@@ -545,7 +545,7 @@ export default function SettingsScreen() {
           {'\n'}{`LFG \u{1F680} v1.0.0`}
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

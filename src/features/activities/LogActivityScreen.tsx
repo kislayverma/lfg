@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useMemo, useEffect} from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Platform,
-  KeyboardAvoidingView,
   Keyboard,
-  NativeModules,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 import {useActivitySearch} from '../../hooks/useActivities';
 import {logActivity} from '../../hooks/useActivities';
@@ -34,23 +32,6 @@ export default function LogActivityScreen() {
   const showCelebration = useUIStore(s => s.showCelebration);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-
-  // Match the system nav bar color to this modal's background on Android
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      NativeModules.NavigationBarColor?.setColor(
-        theme.colors.bgLight,
-        !theme.statusBarLight,
-      );
-      return () => {
-        // Restore main bg color when leaving the modal
-        NativeModules.NavigationBarColor?.setColor(
-          theme.colors.bg,
-          !theme.statusBarLight,
-        );
-      };
-    }
-  }, [theme]);
 
   const initialDate = route.params?.date
     ? new Date(route.params.date)
@@ -120,10 +101,7 @@ export default function LogActivityScreen() {
   const styles = useStyles(theme);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={100}>
+    <ScreenWrapper keyboard edges={[]} bgColor={theme.colors.bgLight}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, {paddingBottom: Math.max(40, insets.bottom + 16)}]}
@@ -236,7 +214,7 @@ export default function LogActivityScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

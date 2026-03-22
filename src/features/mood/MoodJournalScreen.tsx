@@ -16,11 +16,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   Keyboard,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
@@ -98,11 +96,7 @@ export default function MoodJournalScreen() {
   ]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={100}>
+    <ScreenWrapper keyboard edges={[]}>
         <View style={styles.content}>
           {/* Mood badge */}
           <View style={[styles.moodBadge, {backgroundColor: categoryColor}]}>
@@ -139,8 +133,7 @@ export default function MoodJournalScreen() {
             {isSaving ? 'Saving...' : 'Log Mood'}
           </Text>
         </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

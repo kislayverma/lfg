@@ -13,7 +13,7 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import {database, Activity, ActivityLog} from '../../database';
 import {Q} from '@nozbe/watermelondb';
 import {useAuthStore} from '../../stores/authStore';
@@ -190,7 +190,7 @@ export default function MoodHistoryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <ScreenWrapper edges={[]}>
       {isLoading ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Loading...</Text>
@@ -212,7 +212,7 @@ export default function MoodHistoryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

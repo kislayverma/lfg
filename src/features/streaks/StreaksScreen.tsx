@@ -8,8 +8,8 @@ import {
   RefreshControl,
   Animated,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 import {useActivities} from '../../hooks/useActivities';
@@ -293,7 +293,7 @@ export default function StreaksScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper>
       {/* Hero header */}
       <View style={styles.heroHeader}>
         <Text style={styles.heroTitle}>Your Streaks</Text>
@@ -375,7 +375,7 @@ export default function StreaksScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 

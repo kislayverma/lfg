@@ -13,9 +13,36 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		97429CFF66345A5886E1596A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		A1B2C3D4E5F60001 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002 /* ShareViewController.swift */; };
+		A1B2C3D4E5F60009 /* ShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1B2C3D4E5F6000B /* libPods-ShareExtension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000A /* libPods-ShareExtension.a */; };
 		D28599FB0D3C43F896DDDB70 /* crowd_cheer_3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 68ACEAFFBAF14AC8B5869D79 /* crowd_cheer_3.mp3 */; };
 		ED194A645BD146BDAA33EFF0 /* crowd_cheer_1.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 77A46FE3256841FA8F01D5F4 /* crowd_cheer_1.mp3 */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1B2C3D4E5F60007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1B2C3D4E5F60004;
+			remoteInfo = ShareExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1B2C3D4E5F6000C /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1B2C3D4E5F60009 /* ShareExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* lfg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lfg.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -30,6 +57,14 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = lfg/AppDelegate.swift; sourceTree = "<group>"; };
 		77A46FE3256841FA8F01D5F4 /* crowd_cheer_1.mp3 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = crowd_cheer_1.mp3; path = ../src/assets/sounds/crowd_cheer_1.mp3; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = lfg/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60003 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6000A /* libPods-ShareExtension.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ShareExtension.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6000D /* Pods-ShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.debug.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000E /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.release.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F60011 /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
+		A1B2C3D4E5F60012 /* lfg.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = lfg.entitlements; path = lfg/lfg.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -39,6 +74,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-lfg.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D4E5F60005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F6000B /* libPods-ShareExtension.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,6 +96,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				A1B2C3D4E5F60012 /* lfg.entitlements */,
 			);
 			name = lfg;
 			sourceTree = "<group>";
@@ -62,6 +106,7 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				5DCACB8F33CDC322A6C60F78 /* libPods-lfg.a */,
+				A1B2C3D4E5F6000A /* libPods-ShareExtension.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -77,6 +122,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* lfg */,
+				A1B2C3D4E5F6000F /* ShareExtension */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -92,8 +138,19 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* lfg.app */,
+				A1B2C3D4E5F60003 /* ShareExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F6000F /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60002 /* ShareViewController.swift */,
+				A1B2C3D4E5F60010 /* Info.plist */,
+				A1B2C3D4E5F60011 /* ShareExtension.entitlements */,
+			);
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
@@ -101,6 +158,8 @@
 			children = (
 				3B4392A12AC88292D35C810B /* Pods-lfg.debug.xcconfig */,
 				5709B34CF0A7D63546082F79 /* Pods-lfg.release.xcconfig */,
+				A1B2C3D4E5F6000D /* Pods-ShareExtension.debug.xcconfig */,
+				A1B2C3D4E5F6000E /* Pods-ShareExtension.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -130,15 +189,35 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				A1B2C3D4E5F6000C /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A1B2C3D4E5F60008 /* PBXTargetDependency */,
 			);
 			name = lfg;
 			productName = lfg;
 			productReference = 13B07F961A680F5B00A75B9A /* lfg.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A1B2C3D4E5F60004 /* ShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F60020 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
+			buildPhases = (
+				A1B2C3D4E5F60030 /* [CP] Check Pods Manifest.lock */,
+				A1B2C3D4E5F60006 /* Sources */,
+				A1B2C3D4E5F60005 /* Frameworks */,
+				A1B2C3D4E5F60040 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShareExtension;
+			productName = ShareExtension;
+			productReference = A1B2C3D4E5F60003 /* ShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -150,6 +229,9 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					A1B2C3D4E5F60004 = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -167,6 +249,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* lfg */,
+				A1B2C3D4E5F60004 /* ShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -182,6 +265,13 @@
 				ED194A645BD146BDAA33EFF0 /* crowd_cheer_1.mp3 in Resources */,
 				3FC5767B134A49869DE9FB92 /* crowd_cheer_2.mp3 in Resources */,
 				D28599FB0D3C43F896DDDB70 /* crowd_cheer_3.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D4E5F60040 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -219,6 +309,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-lfg/Pods-lfg-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A1B2C3D4E5F60030 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ShareExtension-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
@@ -271,15 +383,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1B2C3D4E5F60006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1B2C3D4E5F60001 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1B2C3D4E5F60008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1B2C3D4E5F60004 /* ShareExtension */;
+			targetProxy = A1B2C3D4E5F60007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-lfg.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = lfg/lfg.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = lfg/Info.plist;
@@ -308,8 +438,10 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-lfg.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = lfg/lfg.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = lfg/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -488,6 +620,57 @@
 			};
 			name = Release;
 		};
+		A1B2C3D4E5F60021 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F6000D /* Pods-ShareExtension.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfg.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F60022 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F6000E /* Pods-ShareExtension.release.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lfg.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -505,6 +688,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F60020 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F60021 /* Debug */,
+				A1B2C3D4E5F60022 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

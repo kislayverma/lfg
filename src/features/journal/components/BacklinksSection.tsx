@@ -6,7 +6,7 @@ import type {Theme} from '../../../theme/types';
 
 interface BacklinksSectionProps {
   titleNormalized: string;
-  onNavigateToPage: (title: string) => void;
+  onNavigateToPage: (title: string, pageType: 'daily' | 'page') => void;
 }
 
 export default function BacklinksSection({
@@ -28,7 +28,7 @@ export default function BacklinksSection({
         <TouchableOpacity
           key={page.id}
           style={styles.item}
-          onPress={() => onNavigateToPage(page.title)}
+          onPress={() => onNavigateToPage(page.title, page.pageType)}
           activeOpacity={0.7}>
           <Text style={styles.pageIcon}>
             {page.pageType === 'daily' ? '\u{1F4C5}' : '\u{1F4C4}'}
@@ -70,6 +70,7 @@ const useStyles = (theme: Theme) =>
           alignItems: 'center',
           paddingVertical: spacing.sm,
           paddingHorizontal: spacing.md,
+          minHeight: 44,
           borderRadius: radius.sm,
           ...theme.glassCard,
           marginBottom: spacing.xs,

@@ -5,11 +5,10 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Animated,
 } from 'react-native';
+import ScreenWrapper from '../../components/ScreenWrapper';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
@@ -180,9 +179,7 @@ export default function SignUpScreen() {
   const isValid = name.trim().length > 0 && phone.trim().length > 0;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <ScreenWrapper keyboard>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled">
@@ -256,6 +253,6 @@ export default function SignUpScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }

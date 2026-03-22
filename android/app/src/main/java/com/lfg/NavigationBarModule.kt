@@ -1,6 +1,7 @@
 package com.lfg
 
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -17,7 +18,10 @@ class NavigationBarModule(private val reactContext: ReactApplicationContext) :
         UiThreadUtil.runOnUiThread {
             val activity = reactContext.currentActivity ?: return@runOnUiThread
             val window = activity.window
-            window.navigationBarColor = Color.parseColor(color)
+            val parsedColor = Color.parseColor(color)
+            window.navigationBarColor = parsedColor
+            // Also set window background to prevent white gaps between views
+            window.setBackgroundDrawable(ColorDrawable(parsedColor))
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 @Suppress("DEPRECATION")

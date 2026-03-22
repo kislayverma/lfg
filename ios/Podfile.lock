@@ -3,6 +3,8 @@ PODS:
   - hermes-engine (250829098.0.7):
     - hermes-engine/Pre-built (= 250829098.0.7)
   - hermes-engine/Pre-built (250829098.0.7)
+  - MMKV (2.2.4):
+    - MMKVCore (~> 2.2.4)
   - MMKVCore (2.2.4)
   - NitroMmkv (4.1.2):
     - hermes-engine
@@ -1540,6 +1542,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-speech-recognition-kit (1.0.7):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - React-NativeModulesApple (0.84.0):
     - hermes-engine
     - React-callinvoker
@@ -1930,6 +1954,8 @@ PODS:
     - TSBackgroundFetch (~> 4.0.0)
   - RNCalendarEvents (2.2.0):
     - React
+  - RNFS (2.20.0):
+    - React-Core
   - RNNotifee (9.1.8):
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
@@ -2103,6 +2129,7 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - MMKV (~> 2.0)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2144,6 +2171,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-contacts (from `../node_modules/react-native-contacts`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-speech-recognition-kit (from `../node_modules/react-native-speech-recognition-kit`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -2180,6 +2208,7 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RNBackgroundFetch (from `../node_modules/react-native-background-fetch`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
+  - RNFS (from `../node_modules/react-native-fs`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2192,6 +2221,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - MMKV
     - MMKVCore
     - TSBackgroundFetch
 
@@ -2281,6 +2311,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-contacts"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-speech-recognition-kit:
+    :path: "../node_modules/react-native-speech-recognition-kit"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -2353,6 +2385,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-background-fetch"
   RNCalendarEvents:
     :path: "../node_modules/react-native-calendar-events"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
   RNReactNativeHapticFeedback:
@@ -2375,6 +2409,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   FBLazyVector: c12d2108050e27952983d565a232f6f7b1ad5e69
   hermes-engine: 8cd300cebd75530b561cea52490dbce44c28dda7
+  MMKV: 1a8e7dbce7f9cad02c52e1b1091d07bd843aefaf
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroMmkv: c9fd61d98afd00a6e4e1656a415c28f7be0fd74e
   NitroModules: 97978583f36f88f7a348d5bf986d94bc4b340d0a
@@ -2416,6 +2451,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 2fe0f2bd2840dedbd66c0ac249c64f977f39cc18
   react-native-contacts: 5e4dd65fc98efcf029b83dacb5bc80a66b99c89d
   react-native-safe-area-context: 37e680fc4cace3c0030ee46e8987d24f5d3bdab2
+  react-native-speech-recognition-kit: 50a9677f19c68d64dea7904261fb67c6d492f29f
   React-NativeModulesApple: 44a9474594566cd03659f92e38f42599c6b9dee4
   React-networking: db73d91466cb134fcbdaaa579fb2de14e2c2ea01
   React-oscompat: b924b8609d06899f00ab1aa813b0cde9c5e12771
@@ -2452,6 +2488,7 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 730f4dbf4e656ea754652e3f93c672a50a56e62c
   RNBackgroundFetch: a5c9975c270d869a666364ade366d92f7435dd74
   RNCalendarEvents: f90f73666b6bcbb3cc8a491ffbb5e48c0db3de37
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNReactNativeHapticFeedback: d7bc1bcfe68bb139c9919ea81d11d7c6e866e870
   RNScreens: 6cb648bdad8fe9bee9259fe144df95b6d1d5b707
@@ -2463,6 +2500,6 @@ SPEC CHECKSUMS:
   WatermelonDB: 75e467adbaf2cb2809780fb3eda7ce4964e11778
   Yoga: 772166513f9cd2d61a6251d0dacbbfaa5b537479
 
-PODFILE CHECKSUM: 684467a8fd75128670aecd16d3bb2852206e0998
+PODFILE CHECKSUM: e24ca85c1ee298462bd14e9646aa0370d7898771
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2

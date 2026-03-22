@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useMemo, useEffect} from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Platform,
-  KeyboardAvoidingView,
   Keyboard,
-  NativeModules,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RouteProp} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 import {database, Activity} from '../../database';
 import {Q} from '@nozbe/watermelondb';
@@ -60,21 +58,6 @@ export default function ScheduleActivityScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
 
-  // Match the system nav bar color to this modal's background on Android
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      NativeModules.NavigationBarColor?.setColor(
-        theme.colors.bgLight,
-        !theme.statusBarLight,
-      );
-      return () => {
-        NativeModules.NavigationBarColor?.setColor(
-          theme.colors.bg,
-          !theme.statusBarLight,
-        );
-      };
-    }
-  }, [theme]);
   const showToast = useUIStore(s => s.showToast);
   const currentUser = useAuthStore(s => s.currentUser);
   const userId = currentUser?.id;
@@ -271,10 +254,7 @@ export default function ScheduleActivityScreen() {
   });
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={100}>
+    <ScreenWrapper keyboard edges={[]} bgColor={theme.colors.bgLight}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, {paddingBottom: Math.max(40, insets.bottom + 16)}]}
@@ -580,7 +560,7 @@ export default function ScheduleActivityScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

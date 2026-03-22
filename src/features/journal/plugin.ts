@@ -12,6 +12,7 @@ import JournalLink from '../../database/models/JournalLink';
 import JournalScreen from './JournalScreen';
 import PageEditorScreen from './PageEditorScreen';
 import PageListScreen from './PageListScreen';
+import {processShareInbox} from './services/shareInbox';
 
 export const journalPlugin: PluginManifest = {
   id: 'com.lfg.journal',
@@ -65,7 +66,7 @@ export const journalPlugin: PluginManifest = {
       {
         name: 'PageEditor',
         component: PageEditorScreen,
-        options: {headerTitle: 'Page'},
+        options: {headerShown: false},
       },
       {
         name: 'PageList',
@@ -73,5 +74,14 @@ export const journalPlugin: PluginManifest = {
         options: {headerTitle: 'All Pages'},
       },
     ],
+  },
+
+  // ── Lifecycle ─────────────────────────────────────────────────────
+
+  onForeground: async () => {
+    // Process any highlights shared from reading apps while the app
+    // was in the background. Items are picked up from the shared MMKV
+    // inbox and appended to today's daily note with auto-linking.
+    await processShareInbox();
   },
 };
